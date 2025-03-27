@@ -671,7 +671,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     return {
       success: true,
       message: 'Summary analysis completed',
-      blobUrl: '',
+      blobUrl,
       previewData,
       excelBlob
     };
