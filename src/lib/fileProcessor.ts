@@ -411,79 +411,135 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       };
     }
     
-    // Create a map of regions with their decline indicators
-    const summaryMap = new Map<string, {
+    // Create a map of all regions from all three datasets
+    const regionsMap = new Map<string, {
       region_code: string;
-      population_decline: string;
-      industry_decline: string;
-      environment_decline: string;
-      criteria_met: number;
+      // Population criteria
+      population_decline_rate: string;
+      population_consecutive_decline: string;
+      population_category_met: string;
+      // Industry criteria
+      industry_decline_rate: string;
+      industry_consecutive_decline: string;
+      industry_category_met: string;
+      // Environment criteria
+      environment_old_building: string;
+      environment_category_met: string;
+      // Total categories met
+      total_categories_met: number;
     }>();
     
-    // Add population data
+    // Add all regions from population data
     processedData.population.forEach(row => {
       const regionCode = row.region_code;
-      summaryMap.set(regionCode, {
+      const populationDeclineRate = row.Decline_20pct || 'X';
+      const populationConsecutiveDecline = row.ConsecutiveDecline || 'X';
+      
+      // Check if population category is met
+      const populationCategoryMet = (populationDeclineRate === 'O' || populationConsecutiveDecline === 'O') ? 'O' : 'X';
+      
+      regionsMap.set(regionCode, {
         region_code: regionCode,
-        population_decline: row.Decline_20pct || 'X',
-        industry_decline: 'X',
-        environment_decline: 'X',
-        criteria_met: (row.Decline_20pct === 'O') ? 1 : 0
+        population_decline_rate: populationDeclineRate,
+        population_consecutive_decline: populationConsecutiveDecline,
+        population_category_met: populationCategoryMet,
+        industry_decline_rate: 'X',
+        industry_consecutive_decline: 'X',
+        industry_category_met: 'X',
+        environment_old_building: 'X',
+        environment_category_met: 'X',
+        total_categories_met: populationCategoryMet === 'O' ? 1 : 0
       });
     });
     
-    // Add industry data
+    // Add/update regions from industry data
     processedData.industry.forEach(row => {
       const regionCode = row.region_code;
-      if (summaryMap.has(regionCode)) {
-        const summary = summaryMap.get(regionCode)!;
-        summary.industry_decline = row.BusinessDeclineOver5 || 'X';
-        if (row.BusinessDeclineOver5 === 'O') {
-          summary.criteria_met += 1;
+      const industryDeclineRate = row.BusinessDeclineOver5 || 'X';
+      const industryConsecutiveDecline = row.BusinessConsecDecline || 'X';
+      
+      // Check if industry category is met
+      const industryCategoryMet = (industryDeclineRate === 'O' || industryConsecutiveDecline === 'O') ? 'O' : 'X';
+      
+      if (regionsMap.has(regionCode)) {
+        // Update existing region
+        const regionData = regionsMap.get(regionCode)!;
+        regionData.industry_decline_rate = industryDeclineRate;
+        regionData.industry_consecutive_decline = industryConsecutiveDecline;
+        regionData.industry_category_met = industryCategoryMet;
+        
+        // Update total categories met
+        if (industryCategoryMet === 'O') {
+          regionData.total_categories_met += 1;
         }
       } else {
-        summaryMap.set(regionCode, {
+        // Add new region
+        regionsMap.set(regionCode, {
           region_code: regionCode,
-          population_decline: 'X',
-          industry_decline: row.BusinessDeclineOver5 || 'X',
-          environment_decline: 'X',
-          criteria_met: (row.BusinessDeclineOver5 === 'O') ? 1 : 0
+          population_decline_rate: 'X',
+          population_consecutive_decline: 'X',
+          population_category_met: 'X',
+          industry_decline_rate: industryDeclineRate,
+          industry_consecutive_decline: industryConsecutiveDecline,
+          industry_category_met: industryCategoryMet,
+          environment_old_building: 'X',
+          environment_category_met: 'X',
+          total_categories_met: industryCategoryMet === 'O' ? 1 : 0
         });
       }
     });
     
-    // Add environment data
+    // Add/update regions from environment data
     processedData.environment.forEach(row => {
       const regionCode = row.region_code;
-      if (summaryMap.has(regionCode)) {
-        const summary = summaryMap.get(regionCode)!;
-        summary.environment_decline = row.old_building_criterion || 'X';
-        if (row.old_building_criterion === 'O') {
-          summary.criteria_met += 1;
+      const environmentOldBuilding = row.old_building_criterion || 'X';
+      
+      // For environment, the old building criterion is the only one, so it equals the category
+      const environmentCategoryMet = environmentOldBuilding;
+      
+      if (regionsMap.has(regionCode)) {
+        // Update existing region
+        const regionData = regionsMap.get(regionCode)!;
+        regionData.environment_old_building = environmentOldBuilding;
+        regionData.environment_category_met = environmentCategoryMet;
+        
+        // Update total categories met
+        if (environmentCategoryMet === 'O') {
+          regionData.total_categories_met += 1;
         }
       } else {
-        summaryMap.set(regionCode, {
+        // Add new region
+        regionsMap.set(regionCode, {
           region_code: regionCode,
-          population_decline: 'X',
-          industry_decline: 'X',
-          environment_decline: row.old_building_criterion || 'X',
-          criteria_met: (row.old_building_criterion === 'O') ? 1 : 0
+          population_decline_rate: 'X',
+          population_consecutive_decline: 'X',
+          population_category_met: 'X',
+          industry_decline_rate: 'X',
+          industry_consecutive_decline: 'X',
+          industry_category_met: 'X',
+          environment_old_building: environmentOldBuilding,
+          environment_category_met: environmentCategoryMet,
+          total_categories_met: environmentCategoryMet === 'O' ? 1 : 0
         });
       }
     });
     
-    // Create summary rows, filtering for regions with at least 2 criteria met
-    const summaryRows = Array.from(summaryMap.values())
-      .filter(summary => summary.criteria_met >= 2)
-      .sort((a, b) => b.criteria_met - a.criteria_met);
+    // Convert the map to an array and sort by total categories met (descending)
+    const summaryRows = Array.from(regionsMap.values())
+      .sort((a, b) => b.total_categories_met - a.total_categories_met);
     
     // Create headers for CSV and preview
     const headers = [
       'region_code',
-      'population_decline',
-      'industry_decline',
-      'environment_decline',
-      'criteria_met'
+      'population_decline_rate',
+      'population_consecutive_decline',
+      'population_category_met',
+      'industry_decline_rate',
+      'industry_consecutive_decline',
+      'industry_category_met',
+      'environment_old_building',
+      'environment_category_met',
+      'total_categories_met'
     ];
     
     // Create CSV content
@@ -519,20 +575,30 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Prepare preview data
     const previewHeaders = [
       'Region Code',
-      'Population Decline',
-      'Industry Decline',
-      'Environment Decline',
-      'Criteria Met'
+      'Pop. Decline Rate',
+      'Pop. Consec. Decline',
+      'Pop. Category Met',
+      'Ind. Decline Rate',
+      'Ind. Consec. Decline',
+      'Ind. Category Met',
+      'Env. Old Building',
+      'Env. Category Met',
+      'Total Categories'
     ];
     
     const previewData = {
       headers: previewHeaders,
       rows: summaryRows.map(row => ({
         'Region Code': row.region_code,
-        'Population Decline': row.population_decline,
-        'Industry Decline': row.industry_decline,
-        'Environment Decline': row.environment_decline,
-        'Criteria Met': row.criteria_met.toString()
+        'Pop. Decline Rate': row.population_decline_rate,
+        'Pop. Consec. Decline': row.population_consecutive_decline,
+        'Pop. Category Met': row.population_category_met,
+        'Ind. Decline Rate': row.industry_decline_rate,
+        'Ind. Consec. Decline': row.industry_consecutive_decline,
+        'Ind. Category Met': row.industry_category_met,
+        'Env. Old Building': row.environment_old_building,
+        'Env. Category Met': row.environment_category_met,
+        'Total Categories': row.total_categories_met.toString()
       }))
     };
     
@@ -819,34 +885,34 @@ const createSummaryExcelFile = async (
   // Create a new workbook
   const wb = XLSX.utils.book_new();
   
-  // Create summary worksheet
+  // Create summary worksheet with the updated structure
   const summaryExcelData = summaryData.map(row => ({
     'Region Code': row.region_code,
-    'Population Decline': row.population_decline,
-    'Industry Decline': row.industry_decline,
-    'Environment Decline': row.environment_decline,
-    'Criteria Met': row.criteria_met
+    'Pop. Decline Rate': row.population_decline_rate,
+    'Pop. Consec. Decline': row.population_consecutive_decline,
+    'Pop. Category Met': row.population_category_met,
+    'Ind. Decline Rate': row.industry_decline_rate,
+    'Ind. Consec. Decline': row.industry_consecutive_decline,
+    'Ind. Category Met': row.industry_category_met,
+    'Env. Old Building': row.environment_old_building,
+    'Env. Category Met': row.environment_category_met,
+    'Total Categories': row.total_categories_met
   }));
   
   const summaryWs = XLSX.utils.json_to_sheet(summaryExcelData);
   XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
   
-  // Add all indicator data (simplified for now)
-  // In a full implementation, you would format each sheet with proper columns
-  
-  // Add population data
+  // Add all indicator data
   if (populationData.length) {
     const popWs = XLSX.utils.json_to_sheet(populationData);
     XLSX.utils.book_append_sheet(wb, popWs, 'Population');
   }
   
-  // Add industry data
   if (industryData.length) {
     const indWs = XLSX.utils.json_to_sheet(industryData);
     XLSX.utils.book_append_sheet(wb, indWs, 'Industry');
   }
   
-  // Add environment data
   if (environmentData.length) {
     const envWs = XLSX.utils.json_to_sheet(environmentData);
     XLSX.utils.book_append_sheet(wb, envWs, 'Environment');
