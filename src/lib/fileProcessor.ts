@@ -52,16 +52,18 @@ const parseFileContent = (content: string): DataRecord[] => {
  */
 export const processFiles = async (files: File[], indicatorType: IndicatorType = 'population'): Promise<ProcessingResult> => {
   try {
+    // Special case for summary - don't require files
+    if (indicatorType === 'summary') {
+      return processAllIndicators();
+    }
+    
+    // For non-summary indicators, files are required
     if (!files.length) {
       return { success: false, message: 'No files provided' };
     }
 
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (indicatorType === 'summary') {
-      return processAllIndicators();
-    }
 
     // Determine the data_code filter based on the indicator type
     let dataCodeFilter = '';
@@ -455,7 +457,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Add/update regions from industry data
     processedData.industry.forEach(row => {
       const regionCode = row.region_code;
-      const industryDeclineRate = row.BusinessDeclineOver5 || 'X';
+      const industryDeclineRate = row.BusinessDeclineOver5% || 'X';
       const industryConsecutiveDecline = row.BusinessConsecDecline || 'X';
       
       // Check if industry category is met
@@ -605,7 +607,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     return {
       success: true,
       message: 'Summary analysis completed',
-      blobUrl,
+      blobUrl: '',
       previewData,
       excelBlob
     };
