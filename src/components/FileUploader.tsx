@@ -9,6 +9,8 @@ interface FileUploaderProps {
   accept?: string;
   maxFiles?: number;
   className?: string;
+  sectionTitle?: string;
+  dataCodeFilter?: string;
 }
 
 const FileUploader: React.FC<FileUploaderProps> = ({
@@ -16,6 +18,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   accept = '.txt',
   maxFiles = 100,
   className,
+  sectionTitle = 'Upload files',
+  dataCodeFilter = 'to_in_001',
 }) => {
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -144,11 +148,16 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-medium">
-              {dragActive ? 'Drop files here' : 'Upload population data files'}
+              {dragActive ? 'Drop files here' : sectionTitle}
             </h3>
             <p className="text-sm text-muted-foreground max-w-[260px]">
               Drag and drop your .txt files here or click to browse
             </p>
+            {dataCodeFilter && (
+              <p className="text-xs text-muted-foreground">
+                Using data code filter: {dataCodeFilter}
+              </p>
+            )}
           </div>
         </div>
         

@@ -8,6 +8,8 @@ interface PopulationRecord {
   value: string;
 }
 
+export type IndicatorType = 'population' | 'industry';
+
 export interface ProcessingResult {
   success: boolean;
   message: string;
@@ -40,7 +42,7 @@ const parseFileContent = (content: string): PopulationRecord[] => {
 /**
  * Process multiple files and generate a CSV output with UTF-8-sig encoding
  */
-export const processFiles = async (files: File[]): Promise<ProcessingResult> => {
+export const processFiles = async (files: File[], indicatorType: IndicatorType = 'population'): Promise<ProcessingResult> => {
   try {
     if (!files.length) {
       return { success: false, message: 'No files provided' };
@@ -49,6 +51,9 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
+    // Determine the data_code filter based on the indicator type
+    const dataCodeFilter = indicatorType === 'population' ? 'to_in_001' : 'to_fa_010';
+    
     // Process each file and collect the records
     let allRecords: PopulationRecord[] = [];
     
@@ -56,8 +61,8 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
       const content = await file.text();
       const records = parseFileContent(content);
       
-      // Filter only rows with data_code = to_in_001
-      const filteredRecords = records.filter(record => record.data_code === 'to_in_001');
+      // Filter only rows with the appropriate data_code
+      const filteredRecords = records.filter(record => record.data_code === dataCodeFilter);
       
       allRecords = [...allRecords, ...filteredRecords];
       
@@ -92,87 +97,19 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     // Sort years for column headers
     const sortedYears = Array.from(years).sort();
     
-    // Analyze population decline for each region
-    outputRows.forEach(row => {
-      // Convert population values to numbers
-      const populationByYear = new Map<string, number>();
-      let maxPopulation = 0;
-      let maxYear = '';
-      
-      sortedYears.forEach(year => {
-        const yearKey = `year_${year}`;
-        const populationValue = parseFloat(row[yearKey] || '0');
-        
-        if (!isNaN(populationValue)) {
-          populationByYear.set(year, populationValue);
-          
-          if (populationValue > maxPopulation) {
-            maxPopulation = populationValue;
-            maxYear = year;
-          }
-        }
-      });
-      
-      // Mark the max year in the row data
-      if (maxYear) {
-        row[`year_${maxYear}_isMax`] = 'true';
-      }
-      
-      // Get the most recent year with data
-      const availableYears = sortedYears.filter(year => {
-        const yearKey = `year_${year}`;
-        return row[yearKey] && !isNaN(parseFloat(row[yearKey]));
-      });
-      
-      const mostRecentYear = availableYears.length ? availableYears[availableYears.length - 1] : '';
-      const mostRecentPopulation = mostRecentYear ? parseFloat(row[`year_${mostRecentYear}`] || '0') : 0;
-      
-      // Calculate decline rate from peak to most recent
-      let declineRate = 0;
-      if (maxPopulation > 0 && mostRecentPopulation > 0) {
-        declineRate = ((mostRecentPopulation - maxPopulation) / maxPopulation) * 100;
-      }
-      
-      // Check Decline Condition 1: 20% or more decrease from peak
-      const hasDecline20Pct = declineRate <= -20;
-      
-      // Add the decline rate and decline condition results
-      row['DeclineRate'] = declineRate.toFixed(2) + '%';
-      row['Decline_20pct'] = hasDecline20Pct ? 'O' : '';
-      
-      // Check Decline Condition 2: 3+ consecutive years of decline
-      let consecutiveDeclines = 0;
-      let maxConsecutiveDeclines = 0;
-      
-      // Check the last 5 years (or all if less than 5)
-      const recentYears = availableYears.slice(-5);
-      
-      for (let i = 1; i < recentYears.length; i++) {
-        const currentYear = recentYears[i];
-        const prevYear = recentYears[i-1];
-        
-        const currentPop = parseFloat(row[`year_${currentYear}`] || '0');
-        const prevPop = parseFloat(row[`year_${prevYear}`] || '0');
-        
-        if (currentPop < prevPop) {
-          consecutiveDeclines++;
-          row[`year_${currentYear}_declining`] = 'true';
-          
-          if (consecutiveDeclines > maxConsecutiveDeclines) {
-            maxConsecutiveDeclines = consecutiveDeclines;
-          }
-        } else {
-          consecutiveDeclines = 0;
-        }
-      }
-      
-      // Mark if there are 3+ consecutive years of decline
-      row['ConsecutiveDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : '';
-    });
+    // For population indicators, analyze population decline patterns
+    if (indicatorType === 'population') {
+      analyzePopulationDecline(outputRows, sortedYears);
+    }
     
-    // Create CSV header
-    const basicHeaders = ['region_code', ...sortedYears.map(y => `year_${y}`)];
-    const analysisHeaders = ['DeclineRate', 'Decline_20pct', 'ConsecutiveDecline'];
+    // Create CSV headers based on indicator type
+    let basicHeaders = ['region_code', ...sortedYears.map(y => `year_${y}`)];
+    let analysisHeaders: string[] = [];
+    
+    if (indicatorType === 'population') {
+      analysisHeaders = ['DeclineRate', 'Decline_20pct', 'ConsecutiveDecline'];
+    }
+    
     const headers = [...basicHeaders, ...analysisHeaders];
     
     const csvContent = [
@@ -192,43 +129,63 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     combinedArray.set(BOM);
     combinedArray.set(csvContentEncoded, BOM.length);
     
+    // Determine file name based on indicator type
+    const fileName = indicatorType === 'population' 
+      ? 'Population_Decline_Analysis.csv' 
+      : 'Industry_Economy_Pivot.csv';
+    
     // Create the Blob with the combined array and UTF-8 encoding
     const blob = new Blob([combinedArray], { type: 'text/csv;charset=utf-8;' });
     const blobUrl = URL.createObjectURL(blob);
     
-    // Prepare preview data with analysis results
-    const previewData = {
-      headers: [
+    // Prepare preview data
+    let previewHeaders: string[] = [];
+    
+    if (indicatorType === 'population') {
+      previewHeaders = [
         'region_code', 
         ...sortedYears.map(year => year), 
         'Decline Rate', 
         'Decline ≥20%', 
         'Consecutive Decline'
-      ],
+      ];
+    } else {
+      previewHeaders = ['region_code', ...sortedYears.map(year => year)];
+    }
+    
+    const previewData = {
+      headers: previewHeaders,
       rows: outputRows.map(row => {
         const newRow: Record<string, string> = {
           region_code: row.region_code
         };
         
-        // Add years data with visual indicators
+        // Add years data with visual indicators for population data
         sortedYears.forEach(year => {
           const yearKey = `year_${year}`;
           const value = row[yearKey] || '';
           
-          // Add visual indicators
-          if (row[`${yearKey}_isMax`] === 'true') {
-            newRow[year] = `${value} ▲`;
-          } else if (row[`${yearKey}_declining`] === 'true') {
-            newRow[year] = `${value} ▼`;
+          if (indicatorType === 'population') {
+            // Add visual indicators for population data
+            if (row[`${yearKey}_isMax`] === 'true') {
+              newRow[year] = `${value} ▲`;
+            } else if (row[`${yearKey}_declining`] === 'true') {
+              newRow[year] = `${value} ▼`;
+            } else {
+              newRow[year] = value;
+            }
           } else {
+            // No visual indicators for industry data
             newRow[year] = value;
           }
         });
         
-        // Add analysis columns
-        newRow['Decline Rate'] = row['DeclineRate'] || '';
-        newRow['Decline ≥20%'] = row['Decline_20pct'] || '';
-        newRow['Consecutive Decline'] = row['ConsecutiveDecline'] || '';
+        // Add analysis columns for population data
+        if (indicatorType === 'population') {
+          newRow['Decline Rate'] = row['DeclineRate'] || '';
+          newRow['Decline ≥20%'] = row['Decline_20pct'] || '';
+          newRow['Consecutive Decline'] = row['ConsecutiveDecline'] || '';
+        }
         
         return newRow;
       })
@@ -239,7 +196,9 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     
     return {
       success: true,
-      message: 'Population decline analysis completed',
+      message: indicatorType === 'population' 
+        ? 'Population decline analysis completed' 
+        : 'Industry-Economy data processing completed',
       blobUrl,
       previewData
     };
@@ -254,12 +213,96 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
 };
 
 /**
+ * Analyze population decline patterns
+ */
+const analyzePopulationDecline = (outputRows: Record<string, string>[], sortedYears: string[]) => {
+  outputRows.forEach(row => {
+    // Convert population values to numbers
+    const populationByYear = new Map<string, number>();
+    let maxPopulation = 0;
+    let maxYear = '';
+    
+    sortedYears.forEach(year => {
+      const yearKey = `year_${year}`;
+      const populationValue = parseFloat(row[yearKey] || '0');
+      
+      if (!isNaN(populationValue)) {
+        populationByYear.set(year, populationValue);
+        
+        if (populationValue > maxPopulation) {
+          maxPopulation = populationValue;
+          maxYear = year;
+        }
+      }
+    });
+    
+    // Mark the max year in the row data
+    if (maxYear) {
+      row[`year_${maxYear}_isMax`] = 'true';
+    }
+    
+    // Get the most recent year with data
+    const availableYears = sortedYears.filter(year => {
+      const yearKey = `year_${year}`;
+      return row[yearKey] && !isNaN(parseFloat(row[yearKey]));
+    });
+    
+    const mostRecentYear = availableYears.length ? availableYears[availableYears.length - 1] : '';
+    const mostRecentPopulation = mostRecentYear ? parseFloat(row[`year_${mostRecentYear}`] || '0') : 0;
+    
+    // Calculate decline rate from peak to most recent
+    let declineRate = 0;
+    if (maxPopulation > 0 && mostRecentPopulation > 0) {
+      declineRate = ((mostRecentPopulation - maxPopulation) / maxPopulation) * 100;
+    }
+    
+    // Check Decline Condition 1: 20% or more decrease from peak
+    const hasDecline20Pct = declineRate <= -20;
+    
+    // Add the decline rate and decline condition results
+    row['DeclineRate'] = declineRate.toFixed(2) + '%';
+    row['Decline_20pct'] = hasDecline20Pct ? 'O' : '';
+    
+    // Check Decline Condition 2: 3+ consecutive years of decline
+    let consecutiveDeclines = 0;
+    let maxConsecutiveDeclines = 0;
+    
+    // Check the last 5 years (or all if less than 5)
+    const recentYears = availableYears.slice(-5);
+    
+    for (let i = 1; i < recentYears.length; i++) {
+      const currentYear = recentYears[i];
+      const prevYear = recentYears[i-1];
+      
+      const currentPop = parseFloat(row[`year_${currentYear}`] || '0');
+      const prevPop = parseFloat(row[`year_${prevYear}`] || '0');
+      
+      if (currentPop < prevPop) {
+        consecutiveDeclines++;
+        row[`year_${currentYear}_declining`] = 'true';
+        
+        if (consecutiveDeclines > maxConsecutiveDeclines) {
+          maxConsecutiveDeclines = consecutiveDeclines;
+        }
+      } else {
+        consecutiveDeclines = 0;
+      }
+    }
+    
+    // Mark if there are 3+ consecutive years of decline
+    row['ConsecutiveDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : '';
+  });
+};
+
+/**
  * Trigger download of the processed data
  */
 export const downloadResult = (blobUrl: string) => {
   const link = document.createElement('a');
   link.href = blobUrl;
-  link.download = 'Population_Decline_Analysis.csv';
+  link.download = blobUrl.includes('Population') 
+    ? 'Population_Decline_Analysis.csv' 
+    : 'Industry_Economy_Pivot.csv';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
