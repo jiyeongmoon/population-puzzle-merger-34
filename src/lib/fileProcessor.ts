@@ -216,7 +216,7 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
             if (indicatorType === 'population') {
               // Add visual indicators for population data
               if (row[`${yearKey}_isMax`] === 'true') {
-                newRow[year] = `${value} ▲`;
+                newRow[year] = `${value} ★`;
               } else if (row[`${yearKey}_declining`] === 'true') {
                 newRow[year] = `${value} ▼`;
               } else {
@@ -417,14 +417,17 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     const regionsMap = new Map<string, {
       region_code: string;
       // Population criteria
+      population_decline_rate_pct: string;
       population_decline_rate: string;
       population_consecutive_decline: string;
       population_category_met: string;
       // Industry criteria
+      industry_decline_rate_pct: string;
       industry_decline_rate: string;
       industry_consecutive_decline: string;
       industry_category_met: string;
       // Environment criteria
+      environment_old_building_pct: string;
       environment_old_building: string;
       environment_category_met: string;
       // Total categories met
@@ -434,6 +437,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Add all regions from population data
     processedData.population.forEach(row => {
       const regionCode = row.region_code;
+      const populationDeclineRatePct = row.DeclineRate || '0%';
       const populationDeclineRate = row.Decline_20pct || 'X';
       const populationConsecutiveDecline = row.ConsecutiveDecline || 'X';
       
@@ -442,12 +446,15 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       
       regionsMap.set(regionCode, {
         region_code: regionCode,
+        population_decline_rate_pct: populationDeclineRatePct,
         population_decline_rate: populationDeclineRate,
         population_consecutive_decline: populationConsecutiveDecline,
         population_category_met: populationCategoryMet,
+        industry_decline_rate_pct: '0%',
         industry_decline_rate: 'X',
         industry_consecutive_decline: 'X',
         industry_category_met: 'X',
+        environment_old_building_pct: '0%',
         environment_old_building: 'X',
         environment_category_met: 'X',
         total_categories_met: populationCategoryMet === 'O' ? 1 : 0
@@ -457,6 +464,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Add/update regions from industry data
     processedData.industry.forEach(row => {
       const regionCode = row.region_code;
+      const industryDeclineRatePct = row.BusinessDeclineRate || '0%';
       const industryDeclineRate = row["BusinessDeclineOver5%"] || 'X';
       const industryConsecutiveDecline = row.BusinessConsecDecline || 'X';
       
@@ -466,6 +474,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       if (regionsMap.has(regionCode)) {
         // Update existing region
         const regionData = regionsMap.get(regionCode)!;
+        regionData.industry_decline_rate_pct = industryDeclineRatePct;
         regionData.industry_decline_rate = industryDeclineRate;
         regionData.industry_consecutive_decline = industryConsecutiveDecline;
         regionData.industry_category_met = industryCategoryMet;
@@ -478,12 +487,15 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
         // Add new region
         regionsMap.set(regionCode, {
           region_code: regionCode,
+          population_decline_rate_pct: '0%',
           population_decline_rate: 'X',
           population_consecutive_decline: 'X',
           population_category_met: 'X',
+          industry_decline_rate_pct: industryDeclineRatePct,
           industry_decline_rate: industryDeclineRate,
           industry_consecutive_decline: industryConsecutiveDecline,
           industry_category_met: industryCategoryMet,
+          environment_old_building_pct: '0%',
           environment_old_building: 'X',
           environment_category_met: 'X',
           total_categories_met: industryCategoryMet === 'O' ? 1 : 0
@@ -494,6 +506,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Add/update regions from environment data
     processedData.environment.forEach(row => {
       const regionCode = row.region_code;
+      const environmentOldBuildingPct = row.old_building_percentage || '0%';
       const environmentOldBuilding = row.old_building_criterion || 'X';
       
       // For environment, the old building criterion is the only one, so it equals the category
@@ -502,6 +515,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       if (regionsMap.has(regionCode)) {
         // Update existing region
         const regionData = regionsMap.get(regionCode)!;
+        regionData.environment_old_building_pct = environmentOldBuildingPct;
         regionData.environment_old_building = environmentOldBuilding;
         regionData.environment_category_met = environmentCategoryMet;
         
@@ -513,12 +527,15 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
         // Add new region
         regionsMap.set(regionCode, {
           region_code: regionCode,
+          population_decline_rate_pct: '0%',
           population_decline_rate: 'X',
           population_consecutive_decline: 'X',
           population_category_met: 'X',
+          industry_decline_rate_pct: '0%',
           industry_decline_rate: 'X',
           industry_consecutive_decline: 'X',
           industry_category_met: 'X',
+          environment_old_building_pct: environmentOldBuildingPct,
           environment_old_building: environmentOldBuilding,
           environment_category_met: environmentCategoryMet,
           total_categories_met: environmentCategoryMet === 'O' ? 1 : 0
@@ -533,12 +550,15 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Create headers for CSV and preview
     const headers = [
       'region_code',
+      'population_decline_rate_pct',
       'population_decline_rate',
       'population_consecutive_decline',
       'population_category_met',
+      'industry_decline_rate_pct',
       'industry_decline_rate',
       'industry_consecutive_decline',
       'industry_category_met',
+      'environment_old_building_pct',
       'environment_old_building',
       'environment_category_met',
       'total_categories_met'
@@ -578,12 +598,15 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     const previewHeaders = [
       'Region Code',
       'Pop. Decline Rate',
+      'Pop. Decline ≥20%',
       'Pop. Consec. Decline',
       'Pop. Category Met',
       'Ind. Decline Rate',
+      'Ind. Decline ≥5%',
       'Ind. Consec. Decline',
       'Ind. Category Met',
-      'Env. Old Building',
+      'Env. Old Building %',
+      'Env. Old Building ≥50%',
       'Env. Category Met',
       'Total Categories'
     ];
@@ -592,13 +615,16 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       headers: previewHeaders,
       rows: summaryRows.map(row => ({
         'Region Code': row.region_code,
-        'Pop. Decline Rate': row.population_decline_rate,
+        'Pop. Decline Rate': row.population_decline_rate_pct,
+        'Pop. Decline ≥20%': row.population_decline_rate,
         'Pop. Consec. Decline': row.population_consecutive_decline,
         'Pop. Category Met': row.population_category_met,
-        'Ind. Decline Rate': row.industry_decline_rate,
+        'Ind. Decline Rate': row.industry_decline_rate_pct,
+        'Ind. Decline ≥5%': row.industry_decline_rate,
         'Ind. Consec. Decline': row.industry_consecutive_decline,
         'Ind. Category Met': row.industry_category_met,
-        'Env. Old Building': row.environment_old_building,
+        'Env. Old Building %': row.environment_old_building_pct,
+        'Env. Old Building ≥50%': row.environment_old_building,
         'Env. Category Met': row.environment_category_met,
         'Total Categories': row.total_categories_met.toString()
       }))
@@ -698,6 +724,7 @@ const analyzePopulationDecline = (outputRows: Record<string, string>[], sortedYe
     }
     
     // Mark if there are 3+ consecutive years of decline
+    // Modified to require at least 3 consecutive years (i.e., maxConsecutiveDeclines >= 2)
     row['ConsecutiveDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : 'X';
   });
 };
@@ -837,184 +864,4 @@ const createExcelFile = async (
   
   // Add worksheet to workbook
   const sheetName = getSheetNameByIndicator(indicatorType);
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  
-  // Generate Excel file
-  const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  
-  // Convert to Blob
-  return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-};
-
-/**
- * Create an Excel file for the environment indicator
- */
-const createEnvironmentExcelFile = async (data: Record<string, string>[]): Promise<Blob> => {
-  // Create a new workbook
-  const wb = XLSX.utils.book_new();
-  
-  // Convert data to format suitable for Excel
-  const excelData = data.map(row => ({
-    region_code: row.region_code,
-    'Total Buildings': parseInt(row.total_buildings) || 0,
-    'Old Buildings (20+ years)': parseInt(row.old_buildings) || 0,
-    'Old Building %': row.old_building_percentage,
-    'Old Buildings ≥50%': row.old_building_criterion
-  }));
-  
-  // Create a worksheet
-  const ws = XLSX.utils.json_to_sheet(excelData);
-  
-  // Add worksheet to workbook
-  XLSX.utils.book_append_sheet(wb, ws, 'Physical Environment');
-  
-  // Generate Excel file
-  const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  
-  // Convert to Blob
-  return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-};
-
-/**
- * Create a comprehensive Excel file with all sheets
- */
-const createSummaryExcelFile = async (
-  populationData: Record<string, string>[],
-  industryData: Record<string, string>[],
-  environmentData: Record<string, string>[],
-  summaryData: any[]
-): Promise<Blob> => {
-  // Create a new workbook
-  const wb = XLSX.utils.book_new();
-  
-  // Create summary worksheet with the updated structure
-  const summaryExcelData = summaryData.map(row => ({
-    'Region Code': row.region_code,
-    'Pop. Decline Rate': row.population_decline_rate,
-    'Pop. Consec. Decline': row.population_consecutive_decline,
-    'Pop. Category Met': row.population_category_met,
-    'Ind. Decline Rate': row.industry_decline_rate,
-    'Ind. Consec. Decline': row.industry_consecutive_decline,
-    'Ind. Category Met': row.industry_category_met,
-    'Env. Old Building': row.environment_old_building,
-    'Env. Category Met': row.environment_category_met,
-    'Total Categories': row.total_categories_met
-  }));
-  
-  const summaryWs = XLSX.utils.json_to_sheet(summaryExcelData);
-  XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
-  
-  // Add all indicator data
-  if (populationData.length) {
-    const popWs = XLSX.utils.json_to_sheet(populationData);
-    XLSX.utils.book_append_sheet(wb, popWs, 'Population');
-  }
-  
-  if (industryData.length) {
-    const indWs = XLSX.utils.json_to_sheet(industryData);
-    XLSX.utils.book_append_sheet(wb, indWs, 'Industry');
-  }
-  
-  if (environmentData.length) {
-    const envWs = XLSX.utils.json_to_sheet(environmentData);
-    XLSX.utils.book_append_sheet(wb, envWs, 'Environment');
-  }
-  
-  // Generate Excel file
-  const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  
-  // Convert to Blob
-  return new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-};
-
-/**
- * Get file name based on indicator type
- */
-const getFileNameByIndicator = (indicatorType: IndicatorType): string => {
-  switch (indicatorType) {
-    case 'population':
-      return 'Population_Decline_Analysis.csv';
-    case 'industry':
-      return 'Industry_Economy_Analysis.csv';
-    case 'environment':
-      return 'Physical_Environment_Analysis.csv';
-    case 'summary':
-      return 'Regional_Decline_Summary.csv';
-    default:
-      return 'Analysis_Result.csv';
-  }
-};
-
-/**
- * Get sheet name based on indicator type
- */
-const getSheetNameByIndicator = (indicatorType: IndicatorType): string => {
-  switch (indicatorType) {
-    case 'population':
-      return 'Population Decline';
-    case 'industry':
-      return 'Industry Economy';
-    case 'environment':
-      return 'Physical Environment';
-    case 'summary':
-      return 'Summary';
-    default:
-      return 'Analysis Result';
-  }
-};
-
-/**
- * Get success message based on indicator type
- */
-const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
-  switch (indicatorType) {
-    case 'population':
-      return 'Population decline analysis completed';
-    case 'industry':
-      return 'Industry-Economy decline analysis completed';
-    case 'environment':
-      return 'Physical-Environment analysis completed';
-    case 'summary':
-      return 'Summary analysis completed';
-    default:
-      return 'Analysis completed successfully';
-  }
-};
-
-/**
- * Trigger download of the processed data
- */
-export const downloadResult = (blobUrl: string) => {
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  
-  // Determine file name based on indicator type in the URL
-  if (blobUrl.includes('Population')) {
-    link.download = 'Population_Decline_Analysis.csv';
-  } else if (blobUrl.includes('Industry')) {
-    link.download = 'Industry_Economy_Analysis.csv';
-  } else if (blobUrl.includes('Physical')) {
-    link.download = 'Physical_Environment_Analysis.csv';
-  } else if (blobUrl.includes('Summary')) {
-    link.download = 'Regional_Decline_Summary.xlsx';
-  } else {
-    link.download = 'Analysis_Result.csv';
-  }
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-/**
- * Download Excel file
- */
-export const downloadExcel = (blob: Blob, fileName: string = 'Regional_Decline_Analysis.xlsx') => {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+  XLSX.utils.book
