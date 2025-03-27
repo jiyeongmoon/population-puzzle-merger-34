@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -438,17 +437,17 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       const regionCode = row.region_code;
       if (summaryMap.has(regionCode)) {
         const summary = summaryMap.get(regionCode)!;
-        summary.industry_decline = row.BusinessDeclineOver5% || 'X';
-        if (row.BusinessDeclineOver5% === 'O') {
+        summary.industry_decline = row.BusinessDeclineOver5 || 'X';
+        if (row.BusinessDeclineOver5 === 'O') {
           summary.criteria_met += 1;
         }
       } else {
         summaryMap.set(regionCode, {
           region_code: regionCode,
           population_decline: 'X',
-          industry_decline: row.BusinessDeclineOver5% || 'X',
+          industry_decline: row.BusinessDeclineOver5 || 'X',
           environment_decline: 'X',
-          criteria_met: (row.BusinessDeclineOver5% === 'O') ? 1 : 0
+          criteria_met: (row.BusinessDeclineOver5 === 'O') ? 1 : 0
         });
       }
     });
