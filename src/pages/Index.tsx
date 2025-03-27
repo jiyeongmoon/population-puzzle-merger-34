@@ -101,7 +101,7 @@ const Index = () => {
         <div className="max-w-5xl mx-auto w-full flex justify-between items-center">
           <div className="flex items-center">
             <Sparkles className="h-5 w-5 text-primary mr-2" />
-            <h1 className="text-lg font-medium">Population Data Merger</h1>
+            <h1 className="text-lg font-medium">Population Decline Analyzer</h1>
           </div>
         </div>
       </header>
@@ -115,11 +115,11 @@ const Index = () => {
         <div className="max-w-5xl mx-auto w-full space-y-12">
           <motion.div variants={itemAnimation} className="text-center space-y-3">
             <h2 className="text-3xl font-semibold tracking-tight">
-              Combine Population Data Files
+              Analyze Population Decline Patterns
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Upload population data text files to combine them into a single Excel file, 
-              organized by year and administrative area.
+              Upload population data text files to identify regions with significant population decline 
+              and analyze consecutive decline trends.
             </p>
           </motion.div>
           
@@ -142,7 +142,7 @@ const Index = () => {
               <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end">
                 {status === 'idle' && files.length > 0 && (
                   <Button onClick={handleProcessFiles}>
-                    Process Files
+                    Analyze Population Data
                   </Button>
                 )}
               </div>
@@ -163,12 +163,20 @@ const Index = () => {
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-primary mt-0.5" />
               <div>
-                <h3 className="font-medium">About This Tool</h3>
+                <h3 className="font-medium">About This Analysis</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  This tool processes population data files delimited by the ^ symbol. 
-                  It extracts the year from the first column, filters rows with data_code = "to_in_001", 
-                  and generates a pivoted Excel file organized by administrative area and year.
+                  This tool analyzes population data to identify two types of decline patterns:
                 </p>
+                <ul className="text-sm text-muted-foreground list-disc pl-5 mt-2 space-y-1">
+                  <li>
+                    <span className="font-medium">Decline ≥20%:</span> Regions where current population 
+                    has decreased by 20% or more from their historical peak.
+                  </li>
+                  <li>
+                    <span className="font-medium">Consecutive Decline:</span> Regions experiencing 
+                    population decrease for 3 or more consecutive years.
+                  </li>
+                </ul>
               </div>
             </div>
           </motion.div>
@@ -178,7 +186,7 @@ const Index = () => {
       <footer className="py-6 px-6 sm:px-8 border-t">
         <div className="max-w-5xl mx-auto w-full">
           <p className="text-sm text-muted-foreground text-center">
-            Population Data Merger — Built with precision and care
+            Population Decline Analyzer — For demographic research and planning
           </p>
         </div>
       </footer>

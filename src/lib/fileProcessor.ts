@@ -1,7 +1,4 @@
 
-// This is a client-side simulation of file processing
-// In a real implementation, this would be handled by a server with Python/Pandas
-
 import { toast } from "sonner";
 
 interface PopulationRecord {
@@ -95,8 +92,89 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     // Sort years for column headers
     const sortedYears = Array.from(years).sort();
     
+    // Analyze population decline for each region
+    outputRows.forEach(row => {
+      // Convert population values to numbers
+      const populationByYear = new Map<string, number>();
+      let maxPopulation = 0;
+      let maxYear = '';
+      
+      sortedYears.forEach(year => {
+        const yearKey = `year_${year}`;
+        const populationValue = parseFloat(row[yearKey] || '0');
+        
+        if (!isNaN(populationValue)) {
+          populationByYear.set(year, populationValue);
+          
+          if (populationValue > maxPopulation) {
+            maxPopulation = populationValue;
+            maxYear = year;
+          }
+        }
+      });
+      
+      // Mark the max year in the row data
+      if (maxYear) {
+        row[`year_${maxYear}_isMax`] = 'true';
+      }
+      
+      // Get the most recent year with data
+      const availableYears = sortedYears.filter(year => {
+        const yearKey = `year_${year}`;
+        return row[yearKey] && !isNaN(parseFloat(row[yearKey]));
+      });
+      
+      const mostRecentYear = availableYears.length ? availableYears[availableYears.length - 1] : '';
+      const mostRecentPopulation = mostRecentYear ? parseFloat(row[`year_${mostRecentYear}`] || '0') : 0;
+      
+      // Calculate decline rate from peak to most recent
+      let declineRate = 0;
+      if (maxPopulation > 0 && mostRecentPopulation > 0) {
+        declineRate = ((mostRecentPopulation - maxPopulation) / maxPopulation) * 100;
+      }
+      
+      // Check Decline Condition 1: 20% or more decrease from peak
+      const hasDecline20Pct = declineRate <= -20;
+      
+      // Add the decline rate and decline condition results
+      row['DeclineRate'] = declineRate.toFixed(2) + '%';
+      row['Decline_20pct'] = hasDecline20Pct ? 'O' : '';
+      
+      // Check Decline Condition 2: 3+ consecutive years of decline
+      let consecutiveDeclines = 0;
+      let maxConsecutiveDeclines = 0;
+      
+      // Check the last 5 years (or all if less than 5)
+      const recentYears = availableYears.slice(-5);
+      
+      for (let i = 1; i < recentYears.length; i++) {
+        const currentYear = recentYears[i];
+        const prevYear = recentYears[i-1];
+        
+        const currentPop = parseFloat(row[`year_${currentYear}`] || '0');
+        const prevPop = parseFloat(row[`year_${prevYear}`] || '0');
+        
+        if (currentPop < prevPop) {
+          consecutiveDeclines++;
+          row[`year_${currentYear}_declining`] = 'true';
+          
+          if (consecutiveDeclines > maxConsecutiveDeclines) {
+            maxConsecutiveDeclines = consecutiveDeclines;
+          }
+        } else {
+          consecutiveDeclines = 0;
+        }
+      }
+      
+      // Mark if there are 3+ consecutive years of decline
+      row['ConsecutiveDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : '';
+    });
+    
     // Create CSV header
-    const headers = ['region_code', ...sortedYears.map(y => `year_${y}`)];
+    const basicHeaders = ['region_code', ...sortedYears.map(y => `year_${y}`)];
+    const analysisHeaders = ['DeclineRate', 'Decline_20pct', 'ConsecutiveDecline'];
+    const headers = [...basicHeaders, ...analysisHeaders];
+    
     const csvContent = [
       headers.join(','),
       ...outputRows.map(row => {
@@ -118,17 +196,39 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     const blob = new Blob([combinedArray], { type: 'text/csv;charset=utf-8;' });
     const blobUrl = URL.createObjectURL(blob);
     
-    // Prepare preview data
+    // Prepare preview data with analysis results
     const previewData = {
-      headers: headers.map(header => header.startsWith('year_') ? header.substring(5) : header),
+      headers: [
+        'region_code', 
+        ...sortedYears.map(year => year), 
+        'Decline Rate', 
+        'Decline ≥20%', 
+        'Consecutive Decline'
+      ],
       rows: outputRows.map(row => {
         const newRow: Record<string, string> = {
           region_code: row.region_code
         };
         
+        // Add years data with visual indicators
         sortedYears.forEach(year => {
-          newRow[year] = row[`year_${year}`] || '';
+          const yearKey = `year_${year}`;
+          const value = row[yearKey] || '';
+          
+          // Add visual indicators
+          if (row[`${yearKey}_isMax`] === 'true') {
+            newRow[year] = `${value} ▲`;
+          } else if (row[`${yearKey}_declining`] === 'true') {
+            newRow[year] = `${value} ▼`;
+          } else {
+            newRow[year] = value;
+          }
         });
+        
+        // Add analysis columns
+        newRow['Decline Rate'] = row['DeclineRate'] || '';
+        newRow['Decline ≥20%'] = row['Decline_20pct'] || '';
+        newRow['Consecutive Decline'] = row['ConsecutiveDecline'] || '';
         
         return newRow;
       })
@@ -139,7 +239,7 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     
     return {
       success: true,
-      message: 'Files processed successfully',
+      message: 'Population decline analysis completed',
       blobUrl,
       previewData
     };
@@ -159,7 +259,7 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
 export const downloadResult = (blobUrl: string) => {
   const link = document.createElement('a');
   link.href = blobUrl;
-  link.download = 'Combined_Population_by_Region.csv';
+  link.download = 'Population_Decline_Analysis.csv';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

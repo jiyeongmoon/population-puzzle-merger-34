@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Loader2, Download, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Loader2, Download, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -61,9 +61,11 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               />
             </div>
             <p className="text-center text-sm text-muted-foreground">
-              {progress < 100 
+              {progress < 50 
                 ? 'Filtering and combining population data' 
-                : 'Creating pivot table by region and year'
+                : progress < 80
+                ? 'Creating pivot table by region and year'
+                : 'Analyzing population decline trends'
               }
             </p>
           </div>
@@ -78,16 +80,16 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <h3 className="text-base font-medium">Processing Complete</h3>
+              <h3 className="text-base font-medium">Analysis Complete</h3>
               <p className="text-sm text-muted-foreground">
-                Your population data has been successfully filtered and pivoted by region and year
+                Population data has been analyzed for decline patterns
               </p>
             </div>
             
             {previewData && previewData.rows.length > 0 && (
               <div className="w-full space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">Data Preview</h4>
+                  <h4 className="text-sm font-medium">Analysis Preview</h4>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -109,12 +111,28 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                 </div>
                 
                 {showPreview && (
-                  <div className="w-full rounded border overflow-auto max-h-[300px]">
+                  <div className="w-full rounded border overflow-auto max-h-[400px]">
+                    <div className="p-2 bg-muted/30 text-xs space-y-1">
+                      <div className="flex items-center gap-1">
+                        <span className="text-green-600 font-medium">▲</span>
+                        <span>Peak population year</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-red-600 font-medium">▼</span>
+                        <span>Declining year</span>
+                      </div>
+                    </div>
                     <Table>
                       <TableHeader>
                         <TableRow>
                           {previewData.headers.map((header, index) => (
-                            <TableHead key={index} className={index === 0 ? "sticky left-0 z-10 bg-background border-r" : ""}>
+                            <TableHead 
+                              key={index} 
+                              className={cn(
+                                index === 0 ? "sticky left-0 z-10 bg-background border-r" : "",
+                                index > previewData.headers.length - 4 ? "bg-muted/20" : ""
+                              )}
+                            >
                               {header}
                             </TableHead>
                           ))}
@@ -123,14 +141,30 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                       <TableBody>
                         {previewData.rows.slice(0, 10).map((row, rowIndex) => (
                           <TableRow key={rowIndex}>
-                            {previewData.headers.map((header, cellIndex) => (
-                              <TableCell 
-                                key={`${rowIndex}-${cellIndex}`}
-                                className={cellIndex === 0 ? "sticky left-0 z-10 bg-background border-r font-medium" : ""}
-                              >
-                                {row[header]}
-                              </TableCell>
-                            ))}
+                            {previewData.headers.map((header, cellIndex) => {
+                              const value = row[header] || '';
+                              const formattedValue = value.includes('▲') 
+                                ? <><span>{value.replace(' ▲', '')}</span><ArrowUp className="inline ml-1 h-3 w-3 text-green-600" /></>
+                                : value.includes('▼')
+                                ? <><span>{value.replace(' ▼', '')}</span><ArrowDown className="inline ml-1 h-3 w-3 text-red-600" /></>
+                                : value;
+
+                              return (
+                                <TableCell 
+                                  key={`${rowIndex}-${cellIndex}`}
+                                  className={cn(
+                                    cellIndex === 0 ? "sticky left-0 z-10 bg-background border-r font-medium" : "",
+                                    cellIndex > previewData.headers.length - 4 ? "bg-muted/20" : "",
+                                    header === 'Decline ≥20%' && value === 'O' ? "text-red-600 font-bold" : "",
+                                    header === 'Consecutive Decline' && value === 'O' ? "text-orange-600 font-bold" : "",
+                                    header === 'Decline Rate' && value.startsWith('-') ? "text-red-600" : 
+                                      header === 'Decline Rate' && !value.startsWith('-') && value !== '0.00%' ? "text-green-600" : ""
+                                  )}
+                                >
+                                  {formattedValue}
+                                </TableCell>
+                              );
+                            })}
                           </TableRow>
                         ))}
                       </TableBody>
@@ -150,7 +184,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               className="w-full sm:w-auto"
             >
               <Download className="mr-2 h-4 w-4" />
-              Download Excel File
+              Download Analysis CSV
             </Button>
           </div>
         );
