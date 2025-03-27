@@ -457,7 +457,7 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
     // Add/update regions from industry data
     processedData.industry.forEach(row => {
       const regionCode = row.region_code;
-      const industryDeclineRate = row.BusinessDeclineOver5% || 'X';
+      const industryDeclineRate = row["BusinessDeclineOver5%"] || 'X';
       const industryConsecutiveDecline = row.BusinessConsecDecline || 'X';
       
       // Check if industry category is met
