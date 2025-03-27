@@ -155,6 +155,7 @@ const Index = () => {
               progress={progress}
               errorMessage={error || undefined}
               onDownload={handleDownload}
+              previewData={result?.previewData}
             />
           </motion.div>
           
@@ -165,8 +166,8 @@ const Index = () => {
                 <h3 className="font-medium">About This Tool</h3>
                 <p className="text-sm text-muted-foreground mt-1">
                   This tool processes population data files delimited by the ^ symbol. 
-                  It extracts the year from the filename, combines all data, and generates 
-                  a pivoted Excel file organized by administrative area and year.
+                  It extracts the year from the first column, filters rows with data_code = "to_in_001", 
+                  and generates a pivoted Excel file organized by administrative area and year.
                 </p>
               </div>
             </div>

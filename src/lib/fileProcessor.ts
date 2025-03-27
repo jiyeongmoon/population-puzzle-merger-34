@@ -15,6 +15,10 @@ export interface ProcessingResult {
   success: boolean;
   message: string;
   blobUrl?: string;
+  previewData?: {
+    headers: string[];
+    rows: Record<string, string>[];
+  };
 }
 
 /**
@@ -104,13 +108,30 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const blobUrl = URL.createObjectURL(blob);
     
+    // Prepare preview data
+    const previewData = {
+      headers: headers.map(header => header.startsWith('year_') ? header.substring(5) : header),
+      rows: outputRows.map(row => {
+        const newRow: Record<string, string> = {
+          region_code: row.region_code
+        };
+        
+        sortedYears.forEach(year => {
+          newRow[year] = row[`year_${year}`] || '';
+        });
+        
+        return newRow;
+      })
+    };
+    
     // Simulate final processing
     await new Promise(resolve => setTimeout(resolve, 800));
     
     return {
       success: true,
       message: 'Files processed successfully',
-      blobUrl
+      blobUrl,
+      previewData
     };
     
   } catch (error) {
