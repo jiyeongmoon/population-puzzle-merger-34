@@ -5,10 +5,10 @@
 import { toast } from "sonner";
 
 interface PopulationRecord {
-  code: string;
-  var: string;
-  value: string;
+  region_code: string;
   year: string;
+  data_code: string;
+  value: string;
 }
 
 export interface ProcessingResult {
@@ -20,7 +20,7 @@ export interface ProcessingResult {
 /**
  * Parse the contents of a population data file
  */
-const parseFileContent = (content: string, year: string): PopulationRecord[] => {
+const parseFileContent = (content: string): PopulationRecord[] => {
   // Split the content by lines and filter out empty lines
   const lines = content.split('\n').filter(line => line.trim().length > 0);
   
@@ -28,20 +28,12 @@ const parseFileContent = (content: string, year: string): PopulationRecord[] => 
   return lines.map(line => {
     const parts = line.split('^');
     return {
-      code: parts[0] || '',
-      var: parts[1] || '',
-      value: parts[2] || '',
-      year
+      year: parts[0] || '',
+      region_code: parts[1] || '',
+      data_code: parts[2] || '',
+      value: parts[3] || ''
     };
   });
-};
-
-/**
- * Extract the year from a filename using regex
- */
-const extractYearFromFilename = (filename: string): string => {
-  const yearMatch = filename.match(/\d{4}/);
-  return yearMatch ? yearMatch[0] : 'Unknown';
 };
 
 /**
@@ -53,48 +45,37 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
       return { success: false, message: 'No files provided' };
     }
 
-    // Sort files by year for processing
-    const sortedFiles = [...files].sort((a, b) => {
-      const yearA = extractYearFromFilename(a.name);
-      const yearB = extractYearFromFilename(b.name);
-      return yearA.localeCompare(yearB);
-    });
-
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     // Process each file and collect the records
     let allRecords: PopulationRecord[] = [];
     
-    for (const file of sortedFiles) {
+    for (const file of files) {
       const content = await file.text();
-      const year = extractYearFromFilename(file.name);
+      const records = parseFileContent(content);
       
-      if (year === 'Unknown') {
-        toast.error(`Could not extract year from file: ${file.name}`);
-        continue;
-      }
+      // Filter only rows with data_code = to_in_001
+      const filteredRecords = records.filter(record => record.data_code === 'to_in_001');
       
-      const records = parseFileContent(content, year);
-      allRecords = [...allRecords, ...records];
+      allRecords = [...allRecords, ...filteredRecords];
       
       // Simulate incremental processing
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Create a map to organize data by code and variable
+    // Create a map to organize data by region_code and year
     const pivotMap = new Map<string, Record<string, string>>();
     const years = new Set<string>();
     
     // Populate the map and collect unique years
     allRecords.forEach(record => {
-      const key = `${record.code}-${record.var}`;
+      const key = record.region_code;
       years.add(record.year);
       
       if (!pivotMap.has(key)) {
         pivotMap.set(key, {
-          code: record.code,
-          var: record.var
+          region_code: record.region_code
         });
       }
       
@@ -111,7 +92,7 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
     const sortedYears = Array.from(years).sort();
     
     // Create CSV header
-    const headers = ['code', 'var', ...sortedYears.map(y => `year_${y}`)];
+    const headers = ['region_code', ...sortedYears.map(y => `year_${y}`)];
     const csvContent = [
       headers.join(','),
       ...outputRows.map(row => {
@@ -147,7 +128,7 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
 export const downloadResult = (blobUrl: string) => {
   const link = document.createElement('a');
   link.href = blobUrl;
-  link.download = 'Combined_Population_Data.xlsx';
+  link.download = 'Combined_Population_by_Region.xlsx';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

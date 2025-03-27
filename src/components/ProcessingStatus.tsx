@@ -46,8 +46,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             </div>
             <p className="text-center text-sm text-muted-foreground">
               {progress < 100 
-                ? 'Combining data from population files' 
-                : 'Finalizing Excel output'
+                ? 'Filtering and combining population data' 
+                : 'Creating pivot table by region and year'
               }
             </p>
           </div>
@@ -64,7 +64,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             <div className="space-y-2">
               <h3 className="text-base font-medium">Processing Complete</h3>
               <p className="text-sm text-muted-foreground">
-                Your population data files have been successfully combined
+                Your population data has been successfully filtered and pivoted by region and year
               </p>
             </div>
             <Button 
