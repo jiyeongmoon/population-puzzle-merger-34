@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -876,3 +877,327 @@ const createExcelFile = async (
       if (value) {
         // Try to convert to number if possible
         const numValue = parseFloat(value);
+        excelRow[year] = isNaN(numValue) ? value : numValue;
+      } else {
+        excelRow[year] = '';
+      }
+    });
+    
+    // Add analysis columns based on indicator type
+    if (indicatorType === 'population') {
+      excelRow['Decline Rate (%)'] = row.DeclineRate || '';
+      excelRow['Decline ≥20%'] = row.Decline_20pct || '';
+      excelRow['Consecutive Decline'] = row.ConsecutiveDecline || '';
+    } else if (indicatorType === 'industry') {
+      excelRow['Business Decline Rate (%)'] = row.BusinessDeclineRate || '';
+      excelRow['Business Decline ≥5%'] = row.BusinessDeclineOver5% || '';
+      excelRow['Business Consecutive Decline'] = row.BusinessConsecDecline || '';
+    }
+    
+    return excelRow;
+  });
+  
+  // Create a worksheet
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  
+  // Set column widths
+  const columnWidths = [
+    { wch: 15 }, // region_code
+    ...years.map(() => ({ wch: 12 })), // year columns
+    { wch: 18 }, // Decline Rate
+    { wch: 15 }, // Decline ≥20% or Business Decline ≥5%
+    { wch: 22 }  // Consecutive Decline
+  ];
+  
+  ws['!cols'] = columnWidths;
+  
+  // Add the worksheet to the workbook
+  const sheetName = indicatorType.charAt(0).toUpperCase() + indicatorType.slice(1);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  
+  // Convert the workbook to a blob
+  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+  
+  // Convert binary string to ArrayBuffer
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
+  
+  // Create blob from ArrayBuffer
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/**
+ * Create an Excel file for environment data
+ */
+const createEnvironmentExcelFile = async (data: Record<string, string>[]): Promise<Blob> => {
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+  
+  // Convert data to format suitable for Excel
+  const excelData = data.map(row => {
+    return {
+      'Region Code': row.region_code,
+      'Total Buildings': isNaN(parseInt(row.total_buildings)) ? row.total_buildings : parseInt(row.total_buildings),
+      'Old Buildings (20+ years)': isNaN(parseInt(row.old_buildings)) ? row.old_buildings : parseInt(row.old_buildings),
+      'Old Building %': row.old_building_percentage,
+      'Old Buildings ≥50%': row.old_building_criterion
+    };
+  });
+  
+  // Create a worksheet
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  
+  // Set column widths
+  const columnWidths = [
+    { wch: 15 }, // Region Code
+    { wch: 15 }, // Total Buildings
+    { wch: 22 }, // Old Buildings
+    { wch: 15 }, // Old Building %
+    { wch: 20 }  // Old Buildings ≥50%
+  ];
+  
+  ws['!cols'] = columnWidths;
+  
+  // Add the worksheet to the workbook
+  XLSX.utils.book_append_sheet(wb, ws, 'Environment');
+  
+  // Convert the workbook to a blob
+  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+  
+  // Convert binary string to ArrayBuffer
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
+  
+  // Create blob from ArrayBuffer
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/**
+ * Create a comprehensive Excel file with all sheets
+ */
+const createSummaryExcelFile = async (
+  populationData: Record<string, string>[],
+  industryData: Record<string, string>[],
+  environmentData: Record<string, string>[],
+  summaryData: Record<string, any>[]
+): Promise<Blob> => {
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+  
+  // Format summary data for Excel
+  const summaryExcelData = summaryData.map(row => {
+    return {
+      'Region Code': row.region_code,
+      // Population data
+      'Population Decline Rate': row.population_decline_rate_pct,
+      'Population Decline ≥20%': row.population_decline_rate,
+      'Population Consecutive Decline': row.population_consecutive_decline,
+      'Population Category Met': row.population_category_met,
+      // Industry data
+      'Industry Decline Rate': row.industry_decline_rate_pct,
+      'Industry Decline ≥5%': row.industry_decline_rate,
+      'Industry Consecutive Decline': row.industry_consecutive_decline,
+      'Industry Category Met': row.industry_category_met,
+      // Environment data
+      'Environment Old Building %': row.environment_old_building_pct,
+      'Environment Old Building ≥50%': row.environment_old_building,
+      'Environment Category Met': row.environment_category_met,
+      // Total
+      'Total Categories Met': row.total_categories_met
+    };
+  });
+  
+  // Create summary worksheet
+  const summaryWs = XLSX.utils.json_to_sheet(summaryExcelData);
+  
+  // Set column widths for summary
+  const summaryColumnWidths = [
+    { wch: 15 }, // Region Code
+    { wch: 20 }, // Population Decline Rate
+    { wch: 20 }, // Population Decline ≥20%
+    { wch: 25 }, // Population Consecutive Decline
+    { wch: 22 }, // Population Category Met
+    { wch: 20 }, // Industry Decline Rate
+    { wch: 20 }, // Industry Decline ≥5%
+    { wch: 25 }, // Industry Consecutive Decline
+    { wch: 20 }, // Industry Category Met
+    { wch: 22 }, // Environment Old Building %
+    { wch: 25 }, // Environment Old Building ≥50%
+    { wch: 22 }, // Environment Category Met
+    { wch: 18 }  // Total Categories Met
+  ];
+  
+  summaryWs['!cols'] = summaryColumnWidths;
+  
+  // Add summary worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
+  
+  // Process and add population data worksheet
+  if (populationData.length > 0) {
+    // Get years from population data
+    const populationYears = new Set<string>();
+    populationData.forEach(row => {
+      Object.keys(row).forEach(key => {
+        if (key.startsWith('year_')) {
+          populationYears.add(key.split('_')[1]);
+        }
+      });
+    });
+    
+    // Convert population data for Excel
+    const populationExcelData = populationData.map(row => {
+      const excelRow: Record<string, string | number> = {
+        'Region Code': row.region_code
+      };
+      
+      // Add year data
+      Array.from(populationYears).sort().forEach(year => {
+        const yearKey = `year_${year}`;
+        const value = row[yearKey];
+        
+        if (value) {
+          // Try to convert to number if possible
+          const numValue = parseFloat(value);
+          excelRow[year] = isNaN(numValue) ? value : numValue;
+        } else {
+          excelRow[year] = '';
+        }
+      });
+      
+      // Add analysis columns
+      excelRow['Decline Rate (%)'] = row.DeclineRate || '';
+      excelRow['Decline ≥20%'] = row.Decline_20pct || '';
+      excelRow['Consecutive Decline'] = row.ConsecutiveDecline || '';
+      
+      return excelRow;
+    });
+    
+    // Create population worksheet
+    const populationWs = XLSX.utils.json_to_sheet(populationExcelData);
+    
+    // Add population worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, populationWs, 'Population');
+  }
+  
+  // Process and add industry data worksheet
+  if (industryData.length > 0) {
+    // Get years from industry data
+    const industryYears = new Set<string>();
+    industryData.forEach(row => {
+      Object.keys(row).forEach(key => {
+        if (key.startsWith('year_')) {
+          industryYears.add(key.split('_')[1]);
+        }
+      });
+    });
+    
+    // Convert industry data for Excel
+    const industryExcelData = industryData.map(row => {
+      const excelRow: Record<string, string | number> = {
+        'Region Code': row.region_code
+      };
+      
+      // Add year data
+      Array.from(industryYears).sort().forEach(year => {
+        const yearKey = `year_${year}`;
+        const value = row[yearKey];
+        
+        if (value) {
+          // Try to convert to number if possible
+          const numValue = parseFloat(value);
+          excelRow[year] = isNaN(numValue) ? value : numValue;
+        } else {
+          excelRow[year] = '';
+        }
+      });
+      
+      // Add analysis columns
+      excelRow['Decline Rate (%)'] = row.BusinessDeclineRate || '';
+      excelRow['Decline ≥5%'] = row.BusinessDeclineOver5% || '';
+      excelRow['Consecutive Decline'] = row.BusinessConsecDecline || '';
+      
+      return excelRow;
+    });
+    
+    // Create industry worksheet
+    const industryWs = XLSX.utils.json_to_sheet(industryExcelData);
+    
+    // Add industry worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, industryWs, 'Industry');
+  }
+  
+  // Process and add environment data worksheet
+  if (environmentData.length > 0) {
+    // Convert environment data for Excel
+    const environmentExcelData = environmentData.map(row => {
+      return {
+        'Region Code': row.region_code,
+        'Total Buildings': isNaN(parseInt(row.total_buildings)) ? row.total_buildings : parseInt(row.total_buildings),
+        'Old Buildings (20+ years)': isNaN(parseInt(row.old_buildings)) ? row.old_buildings : parseInt(row.old_buildings),
+        'Old Building %': row.old_building_percentage,
+        'Old Buildings ≥50%': row.old_building_criterion
+      };
+    });
+    
+    // Create environment worksheet
+    const environmentWs = XLSX.utils.json_to_sheet(environmentExcelData);
+    
+    // Add environment worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, environmentWs, 'Environment');
+  }
+  
+  // Convert the workbook to a blob
+  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+  
+  // Convert binary string to ArrayBuffer
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
+  
+  // Create blob from ArrayBuffer
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/**
+ * Get a file name based on the indicator type
+ */
+const getFileNameByIndicator = (indicatorType: IndicatorType): string => {
+  switch (indicatorType) {
+    case 'population':
+      return 'population_decline_analysis.csv';
+    case 'industry':
+      return 'business_decline_analysis.csv';
+    case 'environment':
+      return 'building_age_analysis.csv';
+    case 'summary':
+      return 'comprehensive_analysis.csv';
+    default:
+      return 'analysis_result.csv';
+  }
+};
+
+/**
+ * Get a success message based on the indicator type
+ */
+const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
+  switch (indicatorType) {
+    case 'population':
+      return 'Population decline analysis completed';
+    case 'industry':
+      return 'Business decline analysis completed';
+    case 'environment':
+      return 'Physical environment analysis completed';
+    case 'summary':
+      return 'Comprehensive analysis completed';
+    default:
+      return 'Analysis completed successfully';
+  }
+};
