@@ -951,4 +951,3 @@ export const downloadExcel = (blob: Blob, fileName: string = 'Regional_Decline_A
   link.click();
   document.body.removeChild(link);
 };
-
