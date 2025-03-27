@@ -41,7 +41,7 @@ const parseFileContent = (content: string): PopulationRecord[] => {
 };
 
 /**
- * Process multiple files and generate an Excel-like CSV output
+ * Process multiple files and generate a CSV output with UTF-8-sig encoding
  */
 export const processFiles = async (files: File[]): Promise<ProcessingResult> => {
   try {
@@ -104,8 +104,18 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
       })
     ].join('\n');
     
-    // Create a Blob for the CSV content
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Create a Blob for the CSV content with UTF-8-sig BOM
+    const BOM = new Uint8Array([0xEF, 0xBB, 0xBF]);
+    const textEncoder = new TextEncoder();
+    const csvContentEncoded = textEncoder.encode(csvContent);
+    
+    // Combine BOM and CSV content
+    const combinedArray = new Uint8Array(BOM.length + csvContentEncoded.length);
+    combinedArray.set(BOM);
+    combinedArray.set(csvContentEncoded, BOM.length);
+    
+    // Create the Blob with the combined array and UTF-8 encoding
+    const blob = new Blob([combinedArray], { type: 'text/csv;charset=utf-8;' });
     const blobUrl = URL.createObjectURL(blob);
     
     // Prepare preview data
@@ -149,7 +159,7 @@ export const processFiles = async (files: File[]): Promise<ProcessingResult> => 
 export const downloadResult = (blobUrl: string) => {
   const link = document.createElement('a');
   link.href = blobUrl;
-  link.download = 'Combined_Population_by_Region.xlsx';
+  link.download = 'Combined_Population_by_Region.csv';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
