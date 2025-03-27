@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -890,7 +889,7 @@ const createExcelFile = async (
       excelRow['Consecutive Decline'] = row.ConsecutiveDecline || '';
     } else if (indicatorType === 'industry') {
       excelRow['Business Decline Rate (%)'] = row.BusinessDeclineRate || '';
-      excelRow['Business Decline ≥5%'] = row.BusinessDeclineOver5% || '';
+      excelRow['Business Decline ≥5%'] = row['BusinessDeclineOver5%'] || '';
       excelRow['Business Consecutive Decline'] = row.BusinessConsecDecline || '';
     }
     
@@ -1119,7 +1118,7 @@ const createSummaryExcelFile = async (
       
       // Add analysis columns
       excelRow['Decline Rate (%)'] = row.BusinessDeclineRate || '';
-      excelRow['Decline ≥5%'] = row.BusinessDeclineOver5% || '';
+      excelRow['Decline ≥5%'] = row['BusinessDeclineOver5%'] || '';
       excelRow['Consecutive Decline'] = row.BusinessConsecDecline || '';
       
       return excelRow;
