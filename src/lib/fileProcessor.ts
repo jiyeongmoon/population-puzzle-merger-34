@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -905,49 +904,3 @@ const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
       return 'Population decline analysis completed';
     case 'industry':
       return 'Industry-Economy decline analysis completed';
-    case 'environment':
-      return 'Physical-Environment analysis completed';
-    case 'summary':
-      return 'Summary analysis completed';
-    default:
-      return 'Analysis completed successfully';
-  }
-};
-
-/**
- * Trigger download of the processed data
- */
-export const downloadResult = (blobUrl: string) => {
-  const link = document.createElement('a');
-  link.href = blobUrl;
-  
-  // Determine file name based on indicator type in the URL
-  if (blobUrl.includes('Population')) {
-    link.download = 'Population_Decline_Analysis.csv';
-  } else if (blobUrl.includes('Industry')) {
-    link.download = 'Industry_Economy_Analysis.csv';
-  } else if (blobUrl.includes('Physical')) {
-    link.download = 'Physical_Environment_Analysis.csv';
-  } else if (blobUrl.includes('Summary')) {
-    link.download = 'Regional_Decline_Summary.xlsx';
-  } else {
-    link.download = 'Analysis_Result.csv';
-  }
-  
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
-
-/**
- * Download Excel file
- */
-export const downloadExcel = (blob: Blob, fileName: string = 'Regional_Decline_Analysis.xlsx') => {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
