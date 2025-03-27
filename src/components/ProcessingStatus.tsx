@@ -158,21 +158,17 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                           <TableRow key={rowIndex}>
                             {previewData.headers.map((header, cellIndex) => {
                               const value = row[header] || '';
-                              let formattedValue = value;
                               
-                              if (value.includes('▲')) {
-                                formattedValue = (
-                                  <><span>{value.replace(' ▲', '')}</span><ArrowUp className="inline ml-1 h-3 w-3 text-green-600" /></>
-                                );
-                              } else if (value.includes('▼')) {
-                                formattedValue = (
-                                  <><span>{value.replace(' ▼', '')}</span><ArrowDown className="inline ml-1 h-3 w-3 text-red-600" /></>
-                                );
-                              } else if (value.includes('★')) {
-                                formattedValue = (
-                                  <><span>{value.replace(' ★', '')}</span><Star className="inline ml-1 h-3 w-3 text-amber-500" /></>
-                                );
-                              }
+                              // Instead of creating JSX elements and assigning them to formattedValue,
+                              // we'll render the formatting directly in the return statement
+                              const hasArrowUp = value.includes('▲');
+                              const hasArrowDown = value.includes('▼');
+                              const hasStar = value.includes('★');
+                              
+                              let cleanValue = value;
+                              if (hasArrowUp) cleanValue = value.replace(' ▲', '');
+                              else if (hasArrowDown) cleanValue = value.replace(' ▼', '');
+                              else if (hasStar) cleanValue = value.replace(' ★', '');
 
                               let additionalClasses = "";
                               if (cellIndex === 0) {
@@ -198,7 +194,10 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                                   key={`${rowIndex}-${cellIndex}`}
                                   className={cn(additionalClasses)}
                                 >
-                                  {formattedValue}
+                                  {cleanValue}
+                                  {hasArrowUp && <ArrowUp className="inline ml-1 h-3 w-3 text-green-600" />}
+                                  {hasArrowDown && <ArrowDown className="inline ml-1 h-3 w-3 text-red-600" />}
+                                  {hasStar && <Star className="inline ml-1 h-3 w-3 text-amber-500" />}
                                 </TableCell>
                               );
                             })}
