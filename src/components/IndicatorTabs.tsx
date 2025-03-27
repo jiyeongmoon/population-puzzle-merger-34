@@ -20,7 +20,7 @@ const IndicatorTabs: React.FC<IndicatorTabsProps> = ({
       className="w-full" 
       onValueChange={onValueChange}
     >
-      <TabsList className="grid grid-cols-3 w-full">
+      <TabsList className="grid grid-cols-4 w-full">
         <TabsTrigger value="population" className="flex items-center gap-1.5">
           <Users className="h-4 w-4" />
           <span>Population-Social</span>
@@ -29,9 +29,13 @@ const IndicatorTabs: React.FC<IndicatorTabsProps> = ({
           <Factory className="h-4 w-4" />
           <span>Industrial-Economy</span>
         </TabsTrigger>
-        <TabsTrigger value="environment" className="flex items-center gap-1.5" disabled>
+        <TabsTrigger value="environment" className="flex items-center gap-1.5">
           <TreePine className="h-4 w-4" />
           <span>Physical-Environment</span>
+        </TabsTrigger>
+        <TabsTrigger value="summary" className="flex items-center gap-1.5">
+          <BarChart3 className="h-4 w-4" />
+          <span>Summary</span>
         </TabsTrigger>
       </TabsList>
       
