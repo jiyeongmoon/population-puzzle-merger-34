@@ -651,7 +651,7 @@ const analyzePopulationDecline = (outputRows: Record<string, string>[], sortedYe
       }
     }
     
-    row['ConsecutiveDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : 'X';
+    row['ConsecutiveDecline'] = maxConsecutiveDeclines >= 3 ? 'O' : 'X';
   });
 };
 
@@ -723,7 +723,7 @@ const analyzeBusinessDecline = (outputRows: Record<string, string>[], sortedYear
       }
     }
     
-    row['BusinessConsecDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : 'X';
+    row['BusinessConsecDecline'] = maxConsecutiveDeclines >= 3 ? 'O' : 'X';
   });
 };
 
