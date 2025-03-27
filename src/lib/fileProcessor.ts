@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -864,4 +865,184 @@ const createExcelFile = async (
   
   // Add worksheet to workbook
   const sheetName = getSheetNameByIndicator(indicatorType);
-  XLSX.utils.book
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  
+  // Convert workbook to binary string
+  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+  
+  // Convert binary string to Blob
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
+  
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/**
+ * Create an Excel file for environment data
+ */
+const createEnvironmentExcelFile = async (data: Record<string, string>[]): Promise<Blob> => {
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+  
+  // Convert data to format suitable for Excel
+  const excelData = data.map(row => {
+    return {
+      'Region Code': row.region_code,
+      'Total Buildings': parseInt(row.total_buildings) || 0,
+      'Old Buildings (20+ years)': parseInt(row.old_buildings) || 0,
+      'Old Building %': row.old_building_percentage,
+      'Old Buildings ≥50%': row.old_building_criterion
+    };
+  });
+  
+  // Create a worksheet
+  const ws = XLSX.utils.json_to_sheet(excelData);
+  
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, ws, 'Physical-Environment');
+  
+  // Convert workbook to binary string
+  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+  
+  // Convert binary string to Blob
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
+  
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/**
+ * Create an Excel file with summary data
+ */
+const createSummaryExcelFile = async (
+  populationData: Record<string, string>[],
+  industryData: Record<string, string>[],
+  environmentData: Record<string, string>[],
+  summaryData: Array<{
+    region_code: string;
+    population_decline_rate_pct: string;
+    population_decline_rate: string;
+    population_consecutive_decline: string;
+    population_category_met: string;
+    industry_decline_rate_pct: string;
+    industry_decline_rate: string;
+    industry_consecutive_decline: string;
+    industry_category_met: string;
+    environment_old_building_pct: string;
+    environment_old_building: string;
+    environment_category_met: string;
+    total_categories_met: number;
+  }>
+): Promise<Blob> => {
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+  
+  // Add population data sheet
+  if (populationData.length > 0) {
+    const populationSheet = XLSX.utils.json_to_sheet(populationData);
+    XLSX.utils.book_append_sheet(wb, populationSheet, 'Population-Social');
+  }
+  
+  // Add industry data sheet
+  if (industryData.length > 0) {
+    const industrySheet = XLSX.utils.json_to_sheet(industryData);
+    XLSX.utils.book_append_sheet(wb, industrySheet, 'Industrial-Economy');
+  }
+  
+  // Add environment data sheet
+  if (environmentData.length > 0) {
+    const environmentSheet = XLSX.utils.json_to_sheet(environmentData);
+    XLSX.utils.book_append_sheet(wb, environmentSheet, 'Physical-Environment');
+  }
+  
+  // Add summary sheet
+  const summarySheet = XLSX.utils.json_to_sheet(summaryData.map(row => ({
+    'Region Code': row.region_code,
+    'Population Decline Rate': row.population_decline_rate_pct,
+    'Population Decline ≥20%': row.population_decline_rate,
+    'Population Consecutive Decline': row.population_consecutive_decline,
+    'Population Category Met': row.population_category_met,
+    'Industry Decline Rate': row.industry_decline_rate_pct,
+    'Industry Decline ≥5%': row.industry_decline_rate,
+    'Industry Consecutive Decline': row.industry_consecutive_decline,
+    'Industry Category Met': row.industry_category_met,
+    'Environment Old Building %': row.environment_old_building_pct,
+    'Environment Old Building ≥50%': row.environment_old_building,
+    'Environment Category Met': row.environment_category_met,
+    'Total Categories Met': row.total_categories_met
+  })));
+  
+  XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary');
+  
+  // Convert workbook to binary string
+  const wbout = XLSX.write(wb, { type: 'binary', bookType: 'xlsx' });
+  
+  // Convert binary string to Blob
+  const buf = new ArrayBuffer(wbout.length);
+  const view = new Uint8Array(buf);
+  for (let i = 0; i < wbout.length; i++) {
+    view[i] = wbout.charCodeAt(i) & 0xFF;
+  }
+  
+  return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+};
+
+/**
+ * Get the file name based on indicator type
+ */
+const getFileNameByIndicator = (indicatorType: IndicatorType): string => {
+  switch (indicatorType) {
+    case 'population':
+      return 'population_analysis.csv';
+    case 'industry':
+      return 'industry_analysis.csv';
+    case 'environment':
+      return 'environment_analysis.csv';
+    case 'summary':
+      return 'summary_analysis.csv';
+    default:
+      return 'analysis_result.csv';
+  }
+};
+
+/**
+ * Get the sheet name based on indicator type
+ */
+const getSheetNameByIndicator = (indicatorType: IndicatorType): string => {
+  switch (indicatorType) {
+    case 'population':
+      return 'Population-Social';
+    case 'industry':
+      return 'Industrial-Economy';
+    case 'environment':
+      return 'Physical-Environment';
+    case 'summary':
+      return 'Summary';
+    default:
+      return 'Analysis Result';
+  }
+};
+
+/**
+ * Get success message based on indicator type
+ */
+const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
+  switch (indicatorType) {
+    case 'population':
+      return 'Population decline analysis completed';
+    case 'industry':
+      return 'Business activity decline analysis completed';
+    case 'environment':
+      return 'Physical environment analysis completed';
+    case 'summary':
+      return 'Summary analysis completed';
+    default:
+      return 'Analysis completed successfully';
+  }
+};
