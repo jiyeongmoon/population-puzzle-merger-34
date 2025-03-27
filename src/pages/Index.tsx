@@ -266,7 +266,7 @@ const Index = () => {
                     <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end">
                       {industryStatus === 'idle' && industryFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
-                          Process Industry Data
+                          Analyze Business Decline
                         </Button>
                       )}
                     </div>
@@ -309,8 +309,8 @@ const Index = () => {
                     decreases of 20% or more from their peak and 3+ consecutive years of decline.
                   </li>
                   <li>
-                    <span className="font-medium">Industrial-Economy:</span> Processes industrial data 
-                    with data code to_fa_010 to show economic trends by region.
+                    <span className="font-medium">Industrial-Economy:</span> Analyzes business decline 
+                    with 5%+ drops from peak value and 3+ consecutive years of decline.
                   </li>
                   <li>
                     <span className="font-medium">Physical-Environment:</span> Coming in a future update.

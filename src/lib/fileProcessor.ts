@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 interface PopulationRecord {
@@ -100,6 +99,9 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
     // For population indicators, analyze population decline patterns
     if (indicatorType === 'population') {
       analyzePopulationDecline(outputRows, sortedYears);
+    } else if (indicatorType === 'industry') {
+      // For industry indicators, analyze business decline patterns
+      analyzeBusinessDecline(outputRows, sortedYears);
     }
     
     // Create CSV headers based on indicator type
@@ -108,6 +110,8 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
     
     if (indicatorType === 'population') {
       analysisHeaders = ['DeclineRate', 'Decline_20pct', 'ConsecutiveDecline'];
+    } else if (indicatorType === 'industry') {
+      analysisHeaders = ['BusinessDeclineRate', 'BusinessDeclineOver5%', 'BusinessConsecDecline'];
     }
     
     const headers = [...basicHeaders, ...analysisHeaders];
@@ -132,7 +136,7 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
     // Determine file name based on indicator type
     const fileName = indicatorType === 'population' 
       ? 'Population_Decline_Analysis.csv' 
-      : 'Industry_Economy_Pivot.csv';
+      : 'Industry_Economy_Analysis.csv';
     
     // Create the Blob with the combined array and UTF-8 encoding
     const blob = new Blob([combinedArray], { type: 'text/csv;charset=utf-8;' });
@@ -150,7 +154,13 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
         'Consecutive Decline'
       ];
     } else {
-      previewHeaders = ['region_code', ...sortedYears.map(year => year)];
+      previewHeaders = [
+        'region_code', 
+        ...sortedYears.map(year => year), 
+        'Decline Rate', 
+        'Decline ≥5%', 
+        'Consec. Decline'
+      ];
     }
     
     const previewData = {
@@ -160,7 +170,7 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
           region_code: row.region_code
         };
         
-        // Add years data with visual indicators for population data
+        // Add years data with visual indicators
         sortedYears.forEach(year => {
           const yearKey = `year_${year}`;
           const value = row[yearKey] || '';
@@ -174,8 +184,17 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
             } else {
               newRow[year] = value;
             }
+          } else if (indicatorType === 'industry') {
+            // Add visual indicators for industry data
+            if (row[`${yearKey}_isMax`] === 'true') {
+              newRow[year] = `${value} ★`;
+            } else if (row[`${yearKey}_declining`] === 'true') {
+              newRow[year] = `${value} ▼`;
+            } else {
+              newRow[year] = value;
+            }
           } else {
-            // No visual indicators for industry data
+            // No visual indicators for other data types
             newRow[year] = value;
           }
         });
@@ -185,6 +204,11 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
           newRow['Decline Rate'] = row['DeclineRate'] || '';
           newRow['Decline ≥20%'] = row['Decline_20pct'] || '';
           newRow['Consecutive Decline'] = row['ConsecutiveDecline'] || '';
+        } else if (indicatorType === 'industry') {
+          // Add analysis columns for industry data
+          newRow['Decline Rate'] = row['BusinessDeclineRate'] || '';
+          newRow['Decline ≥5%'] = row['BusinessDeclineOver5%'] || '';
+          newRow['Consec. Decline'] = row['BusinessConsecDecline'] || '';
         }
         
         return newRow;
@@ -198,7 +222,7 @@ export const processFiles = async (files: File[], indicatorType: IndicatorType =
       success: true,
       message: indicatorType === 'population' 
         ? 'Population decline analysis completed' 
-        : 'Industry-Economy data processing completed',
+        : 'Industry-Economy decline analysis completed',
       blobUrl,
       previewData
     };
@@ -295,6 +319,91 @@ const analyzePopulationDecline = (outputRows: Record<string, string>[], sortedYe
 };
 
 /**
+ * Analyze business decline patterns
+ */
+const analyzeBusinessDecline = (outputRows: Record<string, string>[], sortedYears: string[]) => {
+  outputRows.forEach(row => {
+    // Convert business values to numbers
+    const valuesByYear = new Map<string, number>();
+    let maxValue = 0;
+    let maxYear = '';
+    
+    // Only consider the last 10 years for max value calculation
+    const recentYears = sortedYears.slice(-10);
+    
+    recentYears.forEach(year => {
+      const yearKey = `year_${year}`;
+      const value = parseFloat(row[yearKey] || '0');
+      
+      if (!isNaN(value)) {
+        valuesByYear.set(year, value);
+        
+        if (value > maxValue) {
+          maxValue = value;
+          maxYear = year;
+        }
+      }
+    });
+    
+    // Mark the max year in the row data
+    if (maxYear) {
+      row[`year_${maxYear}_isMax`] = 'true';
+    }
+    
+    // Get the most recent year with data
+    const availableYears = sortedYears.filter(year => {
+      const yearKey = `year_${year}`;
+      return row[yearKey] && !isNaN(parseFloat(row[yearKey]));
+    });
+    
+    const mostRecentYear = availableYears.length ? availableYears[availableYears.length - 1] : '';
+    const mostRecentValue = mostRecentYear ? parseFloat(row[`year_${mostRecentYear}`] || '0') : 0;
+    
+    // Calculate decline rate from peak to most recent (within last 10 years)
+    let declineRate = 0;
+    if (maxValue > 0 && mostRecentValue > 0 && maxYear !== mostRecentYear) {
+      declineRate = ((mostRecentValue - maxValue) / maxValue) * 100;
+    }
+    
+    // Check Decline Condition 1: 5% or more decrease from peak
+    const hasDecline5Pct = declineRate <= -5;
+    
+    // Add the decline rate and decline condition results
+    row['BusinessDeclineRate'] = declineRate.toFixed(2) + '%';
+    row['BusinessDeclineOver5%'] = hasDecline5Pct ? 'O' : '';
+    
+    // Check Decline Condition 2: 3+ consecutive years of decline
+    let consecutiveDeclines = 0;
+    let maxConsecutiveDeclines = 0;
+    
+    // Check the last 5 years (or all if less than 5)
+    const recent5Years = availableYears.slice(-5);
+    
+    for (let i = 1; i < recent5Years.length; i++) {
+      const currentYear = recent5Years[i];
+      const prevYear = recent5Years[i-1];
+      
+      const currentVal = parseFloat(row[`year_${currentYear}`] || '0');
+      const prevVal = parseFloat(row[`year_${prevYear}`] || '0');
+      
+      if (currentVal < prevVal) {
+        consecutiveDeclines++;
+        row[`year_${currentYear}_declining`] = 'true';
+        
+        if (consecutiveDeclines > maxConsecutiveDeclines) {
+          maxConsecutiveDeclines = consecutiveDeclines;
+        }
+      } else {
+        consecutiveDeclines = 0;
+      }
+    }
+    
+    // Mark if there are 3+ consecutive years of decline
+    row['BusinessConsecDecline'] = maxConsecutiveDeclines >= 2 ? 'O' : '';
+  });
+};
+
+/**
  * Trigger download of the processed data
  */
 export const downloadResult = (blobUrl: string) => {
@@ -302,7 +411,7 @@ export const downloadResult = (blobUrl: string) => {
   link.href = blobUrl;
   link.download = blobUrl.includes('Population') 
     ? 'Population_Decline_Analysis.csv' 
-    : 'Industry_Economy_Pivot.csv';
+    : 'Industry_Economy_Analysis.csv';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

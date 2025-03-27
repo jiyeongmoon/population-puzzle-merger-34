@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { CheckCircle2, Loader2, Download, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle2, Loader2, Download, Eye, EyeOff, ArrowUp, ArrowDown, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -62,10 +62,10 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             </div>
             <p className="text-center text-sm text-muted-foreground">
               {progress < 50 
-                ? 'Filtering and combining population data' 
+                ? 'Filtering and combining data' 
                 : progress < 80
                 ? 'Creating pivot table by region and year'
-                : 'Analyzing population decline trends'
+                : 'Analyzing decline trends'
               }
             </p>
           </div>
@@ -82,7 +82,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             <div className="space-y-2">
               <h3 className="text-base font-medium">Analysis Complete</h3>
               <p className="text-sm text-muted-foreground">
-                Population data has been analyzed for decline patterns
+                Data has been analyzed for decline patterns
               </p>
             </div>
             
@@ -113,14 +113,29 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                 {showPreview && (
                   <div className="w-full rounded border overflow-auto max-h-[400px]">
                     <div className="p-2 bg-muted/30 text-xs space-y-1">
-                      <div className="flex items-center gap-1">
-                        <span className="text-green-600 font-medium">▲</span>
-                        <span>Peak population year</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-red-600 font-medium">▼</span>
-                        <span>Declining year</span>
-                      </div>
+                      {previewData.headers.includes('Decline ≥20%') ? (
+                        <>
+                          <div className="flex items-center gap-1">
+                            <span className="text-green-600 font-medium">▲</span>
+                            <span>Peak population year</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-red-600 font-medium">▼</span>
+                            <span>Declining year</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-1">
+                            <span className="text-amber-500 font-medium">★</span>
+                            <span>Peak value year (last 10 years)</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-red-600 font-medium">▼</span>
+                            <span>Declining year</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                     <Table>
                       <TableHeader>
@@ -143,23 +158,45 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                           <TableRow key={rowIndex}>
                             {previewData.headers.map((header, cellIndex) => {
                               const value = row[header] || '';
-                              const formattedValue = value.includes('▲') 
-                                ? <><span>{value.replace(' ▲', '')}</span><ArrowUp className="inline ml-1 h-3 w-3 text-green-600" /></>
-                                : value.includes('▼')
-                                ? <><span>{value.replace(' ▼', '')}</span><ArrowDown className="inline ml-1 h-3 w-3 text-red-600" /></>
-                                : value;
+                              let formattedValue = value;
+                              
+                              if (value.includes('▲')) {
+                                formattedValue = (
+                                  <><span>{value.replace(' ▲', '')}</span><ArrowUp className="inline ml-1 h-3 w-3 text-green-600" /></>
+                                );
+                              } else if (value.includes('▼')) {
+                                formattedValue = (
+                                  <><span>{value.replace(' ▼', '')}</span><ArrowDown className="inline ml-1 h-3 w-3 text-red-600" /></>
+                                );
+                              } else if (value.includes('★')) {
+                                formattedValue = (
+                                  <><span>{value.replace(' ★', '')}</span><Star className="inline ml-1 h-3 w-3 text-amber-500" /></>
+                                );
+                              }
+
+                              let additionalClasses = "";
+                              if (cellIndex === 0) {
+                                additionalClasses += "sticky left-0 z-10 bg-background border-r font-medium";
+                              }
+                              if (cellIndex > previewData.headers.length - 4) {
+                                additionalClasses += " bg-muted/20";
+                              }
+                              if ((header === 'Decline ≥20%' || header === 'Decline ≥5%') && value === 'O') {
+                                additionalClasses += " text-red-600 font-bold";
+                              }
+                              if (header === 'Consecutive Decline' || header === 'Consec. Decline') {
+                                if (value === 'O') additionalClasses += " text-orange-600 font-bold";
+                              }
+                              if (header === 'Decline Rate' && value.startsWith('-')) {
+                                additionalClasses += " text-red-600";
+                              } else if (header === 'Decline Rate' && !value.startsWith('-') && value !== '0.00%') {
+                                additionalClasses += " text-green-600";
+                              }
 
                               return (
                                 <TableCell 
                                   key={`${rowIndex}-${cellIndex}`}
-                                  className={cn(
-                                    cellIndex === 0 ? "sticky left-0 z-10 bg-background border-r font-medium" : "",
-                                    cellIndex > previewData.headers.length - 4 ? "bg-muted/20" : "",
-                                    header === 'Decline ≥20%' && value === 'O' ? "text-red-600 font-bold" : "",
-                                    header === 'Consecutive Decline' && value === 'O' ? "text-orange-600 font-bold" : "",
-                                    header === 'Decline Rate' && value.startsWith('-') ? "text-red-600" : 
-                                      header === 'Decline Rate' && !value.startsWith('-') && value !== '0.00%' ? "text-green-600" : ""
-                                  )}
+                                  className={cn(additionalClasses)}
                                 >
                                   {formattedValue}
                                 </TableCell>
