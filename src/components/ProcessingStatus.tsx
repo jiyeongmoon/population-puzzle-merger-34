@@ -140,17 +140,40 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {previewData.headers.map((header, index) => (
-                            <TableHead 
-                              key={index} 
-                              className={cn(
-                                index === 0 ? "sticky left-0 z-10 bg-background border-r" : "",
-                                index > previewData.headers.length - 4 ? "bg-muted/20" : ""
-                              )}
-                            >
-                              {header}
-                            </TableHead>
-                          ))}
+                          {previewData.headers.map((header, index) => {
+                            // Determine category for the header to apply appropriate styling
+                            let categoryClass = "";
+                            
+                            // Population-Social category (light red/pink)
+                            if (header.startsWith('Pop.') || header === 'Region Code') {
+                              categoryClass = "bg-rose-50";
+                            }
+                            // Industrial-Economy category (light orange/yellow)
+                            else if (header.startsWith('Ind.')) {
+                              categoryClass = "bg-amber-50";
+                            }
+                            // Physical-Environment category (light green)
+                            else if (header.startsWith('Env.')) {
+                              categoryClass = "bg-emerald-50";
+                            }
+                            // Total Categories column (neutral with conditional highlight)
+                            else if (header === 'Total Categories') {
+                              categoryClass = "bg-slate-50";
+                            }
+                            
+                            return (
+                              <TableHead 
+                                key={index} 
+                                className={cn(
+                                  categoryClass,
+                                  index === 0 ? "sticky left-0 z-10 bg-background border-r" : "",
+                                  index > previewData.headers.length - 4 ? "bg-muted/20" : ""
+                                )}
+                              >
+                                {header}
+                              </TableHead>
+                            );
+                          })}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -159,8 +182,6 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                             {previewData.headers.map((header, cellIndex) => {
                               const value = row[header] || '';
                               
-                              // Instead of creating JSX elements and assigning them to formattedValue,
-                              // we'll render the formatting directly in the return statement
                               const hasArrowUp = value.includes('▲');
                               const hasArrowDown = value.includes('▼');
                               const hasStar = value.includes('★');
@@ -170,23 +191,50 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                               else if (hasArrowDown) cleanValue = value.replace(' ▼', '');
                               else if (hasStar) cleanValue = value.replace(' ★', '');
 
-                              let additionalClasses = "";
+                              // Determine category for the cell to apply appropriate styling
+                              let categoryClass = "";
+                              
+                              // Population-Social category (light red/pink)
+                              if (header.startsWith('Pop.') || header === 'Region Code') {
+                                categoryClass = "bg-rose-50";
+                              }
+                              // Industrial-Economy category (light orange/yellow)
+                              else if (header.startsWith('Ind.')) {
+                                categoryClass = "bg-amber-50";
+                              }
+                              // Physical-Environment category (light green)
+                              else if (header.startsWith('Env.')) {
+                                categoryClass = "bg-emerald-50";
+                              }
+                              // Total Categories column (neutral with conditional highlight)
+                              else if (header === 'Total Categories') {
+                                categoryClass = "bg-slate-50";
+                                // Optional highlight for values 2 or 3
+                                if (value === '2' || value === '3') {
+                                  categoryClass = "bg-blue-100 font-medium";
+                                }
+                              }
+                              
+                              let additionalClasses = categoryClass;
                               if (cellIndex === 0) {
-                                additionalClasses += "sticky left-0 z-10 bg-background border-r font-medium";
+                                additionalClasses += " sticky left-0 z-10 bg-background border-r font-medium";
                               }
-                              if (cellIndex > previewData.headers.length - 4) {
-                                additionalClasses += " bg-muted/20";
-                              }
-                              if ((header === 'Decline ≥20%' || header === 'Decline ≥5%') && value === 'O') {
+                              if ((header === 'Pop. Decline ≥20%' || header === 'Ind. Decline ≥5%') && value === 'O') {
                                 additionalClasses += " text-red-600 font-bold";
                               }
-                              if (header === 'Consecutive Decline' || header === 'Consec. Decline') {
-                                if (value === 'O') additionalClasses += " text-orange-600 font-bold";
+                              if ((header === 'Pop. Consec. Decline' || header === 'Ind. Consec. Decline') && value === 'O') {
+                                additionalClasses += " text-orange-600 font-bold";
                               }
-                              if (header === 'Decline Rate' && value.startsWith('-')) {
+                              if ((header === 'Pop. Category Met' || header === 'Ind. Category Met' || header === 'Env. Category Met') && value === 'O') {
+                                additionalClasses += " text-blue-600 font-bold";
+                              }
+                              if (header === 'Pop. Decline Rate' && value.startsWith('-')) {
                                 additionalClasses += " text-red-600";
-                              } else if (header === 'Decline Rate' && !value.startsWith('-') && value !== '0.00%') {
+                              } else if (header === 'Pop. Decline Rate' && !value.startsWith('-') && value !== '0.00%') {
                                 additionalClasses += " text-green-600";
+                              }
+                              if (header === 'Ind. Decline Rate' && value.startsWith('-')) {
+                                additionalClasses += " text-red-600";
                               }
 
                               return (
