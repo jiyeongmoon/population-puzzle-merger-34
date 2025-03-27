@@ -91,7 +91,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     processFiles(e.target.files);
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    // Stop propagation to prevent the click from bubbling up
+    e.stopPropagation();
     fileInputRef.current?.click();
   };
   
@@ -129,7 +131,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           multiple
           accept={accept}
           onChange={handleChange}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-[-1]" // Hide input but make it not capture clicks
           tabIndex={-1}
         />
         
