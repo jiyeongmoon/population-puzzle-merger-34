@@ -640,20 +640,6 @@ const Index = () => {
                   />
                 </div>
                 
-                {summaryStatus === 'success' && summaryResult?.blobUrl && (
-                  <div className="mt-4 space-y-4">
-                    <div className="flex justify-center">
-                      <Button 
-                        onClick={() => downloadResult(summaryResult.blobUrl, locationName)}
-                        className="flex items-center gap-2 w-full sm:w-auto"
-                      >
-                        <Download className="h-4 w-4" />
-                        CSV 다운로드
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
                 {summaryStatus === 'success' && summaryResult?.excelBlob && (
                   <div className="mt-4 flex justify-center">
                     <Button 
