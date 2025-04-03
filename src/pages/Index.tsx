@@ -360,7 +360,7 @@ const Index = () => {
                   placeholder="지역명 입력 (예: 청주시)"
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
-                  className="w-full"
+                  className="w-full bg-white border-2 border-primary/20 focus:border-primary/50 shadow-sm"
                 />
               </div>
             </div>
