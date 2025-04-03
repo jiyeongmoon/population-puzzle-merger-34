@@ -1030,3 +1030,8 @@ const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
 export const sanitizeFileName = (name: string): string => {
   return name.replace(/[/\\?%*:|"<>]/g, '');
 };
+
+export const extractYearFromFileName = (fileName: string): string => {
+  const yearMatch = fileName.match(/_(\d{4})[년_]/);
+  return yearMatch ? yearMatch[1] : '';
+};

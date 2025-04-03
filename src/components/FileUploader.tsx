@@ -110,8 +110,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   };
 
   const extractYear = (fileName: string): string => {
-    const yearMatch = fileName.match(/\d{4}/);
-    return yearMatch ? yearMatch[0] : '알 수 없음';
+    // Look for a pattern like "XXXXX_YYYYnumber_" where YYYY is the year
+    const yearMatch = fileName.match(/_(\d{4})[년_]/);
+    return yearMatch ? yearMatch[1] : '알 수 없음';
   };
 
   return (
