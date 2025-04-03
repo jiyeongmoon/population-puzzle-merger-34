@@ -43,7 +43,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       case 'idle':
         return (
           <div className="text-center text-muted-foreground text-sm">
-            Upload files to begin processing
+            파일을 업로드하여 분석을 시작하세요
           </div>
         );
       
@@ -52,7 +52,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           <div className="w-full space-y-3 animate-fade-in">
             <div className="flex items-center justify-center space-x-2">
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              <span className="font-medium">Processing files...</span>
+              <span className="font-medium">파일 처리 중...</span>
             </div>
             <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
               <div 
@@ -62,10 +62,10 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             </div>
             <p className="text-center text-sm text-muted-foreground">
               {progress < 50 
-                ? 'Filtering and combining data' 
+                ? '데이터 필터링 및 결합' 
                 : progress < 80
-                ? 'Creating pivot table by region and year'
-                : 'Analyzing decline trends'
+                ? '지역 및 연도별 피벗 테이블 생성'
+                : '감소 추세 분석'
               }
             </p>
           </div>
@@ -80,16 +80,16 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               </div>
             </div>
             <div className="space-y-2">
-              <h3 className="text-base font-medium">Analysis Complete</h3>
+              <h3 className="text-base font-medium">분석 완료</h3>
               <p className="text-sm text-muted-foreground">
-                Data has been analyzed for decline patterns
+                감소 패턴에 대한 데이터 분석이 완료되었습니다
               </p>
             </div>
             
             {previewData && previewData.rows.length > 0 && (
               <div className="w-full space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-medium">Analysis Preview</h4>
+                  <h4 className="text-sm font-medium">분석 미리보기</h4>
                   <Button 
                     variant="outline" 
                     size="sm"
@@ -99,12 +99,12 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     {showPreview ? (
                       <>
                         <EyeOff className="h-3.5 w-3.5" />
-                        <span>Hide Preview</span>
+                        <span>미리보기 숨기기</span>
                       </>
                     ) : (
                       <>
                         <Eye className="h-3.5 w-3.5" />
-                        <span>Show Preview</span>
+                        <span>미리보기 보기</span>
                       </>
                     )}
                   </Button>
@@ -117,22 +117,22 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                         <>
                           <div className="flex items-center gap-1">
                             <span className="text-green-600 font-medium">▲</span>
-                            <span>Peak population year</span>
+                            <span>인구 최대 연도</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-red-600 font-medium">▼</span>
-                            <span>Declining year</span>
+                            <span>감소 연도</span>
                           </div>
                         </>
                       ) : (
                         <>
                           <div className="flex items-center gap-1">
                             <span className="text-amber-500 font-medium">★</span>
-                            <span>Peak value year (last 10 years)</span>
+                            <span>최대값 연도 (최근 10년)</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="text-red-600 font-medium">▼</span>
-                            <span>Declining year</span>
+                            <span>감소 연도</span>
                           </div>
                         </>
                       )}
@@ -141,6 +141,22 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                       <TableHeader>
                         <TableRow>
                           {previewData.headers.map((header, index) => {
+                            // Translate headers to Korean
+                            let koreanHeader = header;
+                            
+                            // Translation mapping
+                            if (header === 'Region Code') koreanHeader = '집계구 코드';
+                            else if (header === 'Pop. Decline ≥20%') koreanHeader = '인구 감소 ≥20%';
+                            else if (header === 'Pop. Consec. Decline') koreanHeader = '인구 연속 감소';
+                            else if (header === 'Pop. Category Met') koreanHeader = '인구 지표 충족';
+                            else if (header === 'Pop. Decline Rate') koreanHeader = '인구 감소율';
+                            else if (header === 'Ind. Decline ≥5%') koreanHeader = '산업 감소 ≥5%';
+                            else if (header === 'Ind. Consec. Decline') koreanHeader = '산업 연속 감소';
+                            else if (header === 'Ind. Category Met') koreanHeader = '산업 지표 충족';
+                            else if (header === 'Ind. Decline Rate') koreanHeader = '산업 감소율';
+                            else if (header === 'Env. Category Met') koreanHeader = '환경 지표 충족';
+                            else if (header === 'Total Categories') koreanHeader = '총 충족 지표 수';
+                            
                             // Determine category for the header to apply appropriate styling
                             let categoryClass = "";
                             
@@ -170,7 +186,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                                   index > previewData.headers.length - 4 ? "bg-muted/20" : ""
                                 )}
                               >
-                                {header}
+                                {koreanHeader}
                               </TableHead>
                             );
                           })}
@@ -255,7 +271,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     </Table>
                     {previewData.rows.length > 10 && (
                       <div className="p-2 text-center text-sm text-muted-foreground border-t">
-                        Showing 10 of {previewData.rows.length} rows
+                        {previewData.rows.length}개 중 10개 표시
                       </div>
                     )}
                   </div>
@@ -268,7 +284,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               className="w-full sm:w-auto"
             >
               <Download className="mr-2 h-4 w-4" />
-              Download Analysis CSV
+              CSV 다운로드
             </Button>
           </div>
         );
@@ -276,12 +292,12 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       case 'error':
         return (
           <div className="space-y-3 text-center text-destructive animate-fade-in">
-            <h3 className="text-base font-medium">Processing Failed</h3>
+            <h3 className="text-base font-medium">처리 실패</h3>
             <p className="text-sm">
-              {errorMessage || 'An error occurred while processing the files'}
+              {errorMessage || '파일 처리 중 오류가 발생했습니다'}
             </p>
             <p className="text-xs text-muted-foreground">
-              Please check your files and try again
+              파일을 확인하고 다시 시도하세요
             </p>
           </div>
         );

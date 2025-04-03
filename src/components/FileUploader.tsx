@@ -18,7 +18,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   accept = '.txt',
   maxFiles = 100,
   className,
-  sectionTitle = 'Upload files',
+  sectionTitle = '파일 업로드',
   dataCodeFilter = 'to_in_001',
 }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -42,7 +42,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     
     // Check file count
     if (fileList.length > maxFiles) {
-      setError(`Maximum of ${maxFiles} files allowed`);
+      setError(`최대 ${maxFiles}개의 파일만 허용됩니다`);
       return false;
     }
     
@@ -59,7 +59,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
     });
     
     if (invalidFiles.length > 0) {
-      setError(`Only ${accept} files are accepted`);
+      setError(`${accept} 파일만 허용됩니다`);
       return false;
     }
     
@@ -111,7 +111,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
 
   const extractYear = (fileName: string): string => {
     const yearMatch = fileName.match(/\d{4}/);
-    return yearMatch ? yearMatch[0] : 'Unknown';
+    return yearMatch ? yearMatch[0] : '알 수 없음';
   };
 
   return (
@@ -148,14 +148,14 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-medium">
-              {dragActive ? 'Drop files here' : sectionTitle}
+              {dragActive ? '여기에 파일을 놓으세요' : sectionTitle}
             </h3>
             <p className="text-sm text-muted-foreground max-w-[260px]">
-              Drag and drop your .txt files here or click to browse
+              .txt 파일을 끌어다 놓거나 클릭하여 찾아보세요
             </p>
             {dataCodeFilter && (
               <p className="text-xs text-muted-foreground">
-                Using data code filter: {dataCodeFilter}
+                데이터 코드 필터: {dataCodeFilter}
               </p>
             )}
           </div>
@@ -172,7 +172,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   <div className="flex flex-col">
                     <span className="text-sm truncate max-w-[200px]">{file.name}</span>
-                    <span className="text-xs text-muted-foreground">Year: {extractYear(file.name)}</span>
+                    <span className="text-xs text-muted-foreground">연도: {extractYear(file.name)}</span>
                   </div>
                 </div>
                 <Button

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import FileUploader from '@/components/FileUploader';
@@ -78,9 +79,9 @@ const Index = () => {
          (populationStatus !== 'success' || industryStatus !== 'success' || environmentStatus !== 'success'))) {
       
       if (activeIndicator === 'summary') {
-        toast.error("Please process all three indicators before generating the summary");
+        toast.error("모든 세 가지 지표를 먼저 처리해 주세요");
       } else {
-        toast.error("Please upload files first");
+        toast.error("먼저 파일을 업로드해 주세요");
       }
       return;
     }
@@ -211,7 +212,7 @@ const Index = () => {
     } else if (activeIndicator === 'environment' && environmentResult?.blobUrl) {
       downloadResult(environmentResult.blobUrl);
     } else if (activeIndicator === 'summary' && summaryResult?.blobUrl) {
-      downloadResult(summaryResult.blobUrl, 'Regional_Decline_Analysis.csv');
+      downloadResult(summaryResult.blobUrl);
     }
   };
 
@@ -253,7 +254,7 @@ const Index = () => {
       setSummaryError(null);
     }
     
-    toast.info("Reset completed");
+    toast.info("초기화 완료");
   };
 
   const containerAnimation = {
@@ -331,7 +332,7 @@ const Index = () => {
         <div className="max-w-5xl mx-auto w-full flex justify-between items-center">
           <div className="flex items-center">
             <Sparkles className="h-5 w-5 text-primary mr-2" />
-            <h1 className="text-lg font-medium">Regional Decline Analyzer</h1>
+            <h1 className="text-lg font-medium">지역 쇠퇴 분석기</h1>
           </div>
         </div>
       </header>
@@ -345,10 +346,10 @@ const Index = () => {
         <div className="max-w-5xl mx-auto w-full space-y-12">
           <motion.div variants={itemAnimation} className="text-center space-y-3">
             <h2 className="text-3xl font-semibold tracking-tight">
-              Analyze Regional Decline Patterns
+              지역 쇠퇴 패턴 분석
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Upload data files to identify and analyze decline trends across multiple indicators.
+              여러 지표에서 쇠퇴 추세를 식별하고 분석하기 위해 데이터 파일을 업로드하세요.
             </p>
           </motion.div>
           
@@ -361,10 +362,10 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">Population-Social Indicator</h3>
+                      <h3 className="text-xl font-medium">인구-사회 지표</h3>
                       {populationStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
-                          Start Over
+                          다시 시작
                         </Button>
                       )}
                     </div>
@@ -372,7 +373,7 @@ const Index = () => {
                     <FileUploader 
                       onFilesSelected={handleFilesSelected}
                       accept=".txt"
-                      sectionTitle="Upload population data files"
+                      sectionTitle="인구 데이터 파일 업로드"
                       dataCodeFilter="to_in_001"
                     />
                     
@@ -385,13 +386,13 @@ const Index = () => {
                           className="flex items-center gap-2"
                         >
                           <RefreshCcw className="h-4 w-4" />
-                          Reset
+                          초기화
                         </Button>
                       )}
                       
                       {populationStatus === 'idle' && populationFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
-                          Analyze Population Data
+                          인구 데이터 분석
                         </Button>
                       )}
                     </div>
@@ -416,7 +417,7 @@ const Index = () => {
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Download Excel Format
+                      엑셀 형식 다운로드
                     </Button>
                   </div>
                 )}
@@ -426,10 +427,10 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">Industrial-Economy Indicator</h3>
+                      <h3 className="text-xl font-medium">산업-경제 지표</h3>
                       {industryStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
-                          Start Over
+                          다시 시작
                         </Button>
                       )}
                     </div>
@@ -437,7 +438,7 @@ const Index = () => {
                     <FileUploader 
                       onFilesSelected={handleFilesSelected}
                       accept=".txt"
-                      sectionTitle="Upload industry data files"
+                      sectionTitle="산업 데이터 파일 업로드"
                       dataCodeFilter="to_fa_010"
                     />
                     
@@ -450,13 +451,13 @@ const Index = () => {
                           className="flex items-center gap-2"
                         >
                           <RefreshCcw className="h-4 w-4" />
-                          Reset
+                          초기화
                         </Button>
                       )}
                       
                       {industryStatus === 'idle' && industryFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
-                          Analyze Business Decline
+                          사업체 쇠퇴 분석
                         </Button>
                       )}
                     </div>
@@ -481,7 +482,7 @@ const Index = () => {
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Download Excel Format
+                      엑셀 형식 다운로드
                     </Button>
                   </div>
                 )}
@@ -491,10 +492,10 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">Physical-Environment Indicator</h3>
+                      <h3 className="text-xl font-medium">물리-환경 지표</h3>
                       {environmentStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
-                          Start Over
+                          다시 시작
                         </Button>
                       )}
                     </div>
@@ -502,7 +503,7 @@ const Index = () => {
                     <FileUploader 
                       onFilesSelected={handleFilesSelected}
                       accept=".txt"
-                      sectionTitle="Upload building age data files (2023)"
+                      sectionTitle="건물 연령 데이터 파일 업로드 (2023)"
                       dataCodeFilter="ho_yr_*"
                     />
                     
@@ -515,13 +516,13 @@ const Index = () => {
                           className="flex items-center gap-2"
                         >
                           <RefreshCcw className="h-4 w-4" />
-                          Reset
+                          초기화
                         </Button>
                       )}
                       
                       {environmentStatus === 'idle' && environmentFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
-                          Analyze Building Age
+                          건물 연령 분석
                         </Button>
                       )}
                     </div>
@@ -546,7 +547,7 @@ const Index = () => {
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Download Excel Format
+                      엑셀 형식 다운로드
                     </Button>
                   </div>
                 )}
@@ -556,10 +557,10 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">Comprehensive Summary</h3>
+                      <h3 className="text-xl font-medium">종합 요약</h3>
                       {summaryStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
-                          Recalculate
+                          재계산
                         </Button>
                       )}
                     </div>
@@ -568,19 +569,19 @@ const Index = () => {
                       <div className="flex items-start gap-3">
                         <BarChart4 className="w-5 h-5 text-primary mt-0.5" />
                         <div>
-                          <h3 className="font-medium">Indicator Status</h3>
+                          <h3 className="font-medium">지표 상태</h3>
                           <div className="mt-3 space-y-2 text-sm">
                             <div className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${populationStatus === 'success' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span>Population-Social: {populationStatus === 'success' ? 'Processed' : 'Not Processed'}</span>
+                              <span>인구-사회: {populationStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${industryStatus === 'success' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span>Industrial-Economy: {industryStatus === 'success' ? 'Processed' : 'Not Processed'}</span>
+                              <span>산업-경제: {industryStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${environmentStatus === 'success' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span>Physical-Environment: {environmentStatus === 'success' ? 'Processed' : 'Not Processed'}</span>
+                              <span>물리-환경: {environmentStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
                             </div>
                           </div>
                         </div>
@@ -596,14 +597,14 @@ const Index = () => {
                           className="flex items-center gap-2"
                         >
                           <RefreshCcw className="h-4 w-4" />
-                          Reset
+                          초기화
                         </Button>
                       )}
                     
                       {summaryStatus === 'idle' && populationStatus === 'success' && 
                        industryStatus === 'success' && environmentStatus === 'success' && (
                         <Button onClick={handleProcessFiles}>
-                          Generate Comprehensive Analysis
+                          종합 분석 생성
                         </Button>
                       )}
                     </div>
@@ -623,11 +624,11 @@ const Index = () => {
                 {summaryStatus === 'success' && summaryResult?.blobUrl && (
                   <div className="mt-4 flex justify-center">
                     <Button 
-                      onClick={() => downloadResult(summaryResult.blobUrl, 'Regional_Decline_Analysis.csv')}
+                      onClick={() => downloadResult(summaryResult.blobUrl)}
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Download Analysis CSV
+                      CSV 다운로드
                     </Button>
                   </div>
                 )}
@@ -636,11 +637,11 @@ const Index = () => {
                   <div className="mt-4 flex justify-center">
                     <Button 
                       variant="outline"
-                      onClick={() => downloadExcel(summaryResult.excelBlob, 'Regional_Decline_Analysis.xlsx')}
+                      onClick={() => downloadExcel(summaryResult.excelBlob, '지역_쇠퇴_분석.xlsx')}
                       className="flex items-center gap-2 mt-2"
                     >
                       <Download className="h-4 w-4" />
-                      Download Excel Format
+                      엑셀 형식 다운로드
                     </Button>
                   </div>
                 )}
@@ -652,26 +653,26 @@ const Index = () => {
             <div className="flex items-start gap-3">
               <Info className="w-5 h-5 text-primary mt-0.5" />
               <div>
-                <h3 className="font-medium">About This Analysis</h3>
+                <h3 className="font-medium">이 분석에 대하여</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  This tool analyzes regional decline using multiple indicators:
+                  이 도구는 여러 지표를 사용하여 지역 쇠퇴를 분석합니다:
                 </p>
                 <ul className="text-sm text-muted-foreground list-disc pl-5 mt-2 space-y-1">
                   <li>
-                    <span className="font-medium">Population-Social:</span> Identifies regions with population 
-                    decreases of 20% or more from their peak and 3+ consecutive years of decline.
+                    <span className="font-medium">인구-사회:</span> 최고점에서 20% 이상 인구가 
+                    감소하고 연속 3년 이상 감소한 지역을 식별합니다.
                   </li>
                   <li>
-                    <span className="font-medium">Industrial-Economy:</span> Analyzes business decline 
-                    with 5%+ drops from peak value and 3+ consecutive years of decline.
+                    <span className="font-medium">산업-경제:</span> 최고값에서 5%+ 
+                    하락하고 연속 3년 이상 감소한 사업체 감소를 분석합니다.
                   </li>
                   <li>
-                    <span className="font-medium">Physical-Environment:</span> Examines building stock age, 
-                    identifying regions where 50%+ of buildings are over 20 years old.
+                    <span className="font-medium">물리-환경:</span> 건물 연령을 조사하여 
+                    건물의 50%+ 이상이 20년 이상 된 지역을 식별합니다.
                   </li>
                   <li>
-                    <span className="font-medium">Summary:</span> Combines all indicators to identify 
-                    regions that meet at least 2 out of 3 decline criteria.
+                    <span className="font-medium">종합:</span> 모든 지표를 결합하여 
+                    3개 기준 중 2개 이상을 충족하는 지역을 식별합니다.
                   </li>
                 </ul>
               </div>
@@ -683,7 +684,7 @@ const Index = () => {
       <footer className="py-6 px-6 sm:px-8 border-t">
         <div className="max-w-5xl mx-auto w-full">
           <p className="text-sm text-muted-foreground text-center">
-            Regional Decline Analyzer — For demographic and economic research
+            지역 쇠퇴 분석기 — 인구통계 및 경제 연구용
           </p>
         </div>
       </footer>
