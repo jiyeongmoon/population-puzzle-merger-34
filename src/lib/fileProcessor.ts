@@ -34,8 +34,8 @@ export const downloadResult = (blobUrl: string, locationName: string = '') => {
   link.href = blobUrl;
   
   const fileName = locationName 
-    ? `analysis_result_${sanitizeFileName(locationName)}.csv` 
-    : 'analysis_result.csv';
+    ? `${getFileNameByIndicator('summary')}_${sanitizeFileName(locationName)}.csv` 
+    : getFileNameByIndicator('summary');
     
   link.download = fileName;
   document.body.appendChild(link);
@@ -1006,9 +1006,9 @@ const getFileNameByIndicator = (indicatorType: IndicatorType, locationName: stri
     case 'environment':
       return `물리환경${sanitizedLocation}.csv`;
     case 'summary':
-      return `쇠퇴지표 종합${sanitizedLocation}.csv`;
+      return `쇠퇴지표_종합${sanitizedLocation}.csv`;
     default:
-      return `analysis_result${sanitizedLocation}.csv`;
+      return `분석결과${sanitizedLocation}.csv`;
   }
 };
 

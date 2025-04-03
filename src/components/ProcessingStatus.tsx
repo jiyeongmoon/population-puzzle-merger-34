@@ -218,7 +218,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                                 categoryClass = "bg-amber-50";
                               }
                               // Physical-Environment category (light green)
-                              else if (header.startsWith('Env.')) {
+                              if (header.startsWith('Env.')) {
                                 categoryClass = "bg-emerald-50";
                               }
                               // Total Categories column (neutral with conditional highlight)
