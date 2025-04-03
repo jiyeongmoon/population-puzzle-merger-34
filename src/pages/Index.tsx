@@ -4,7 +4,7 @@ import FileUploader from '@/components/FileUploader';
 import ProcessingStatus, { ProcessingStatus as Status } from '@/components/ProcessingStatus';
 import { processFiles, downloadResult, downloadExcel, ProcessingResult, IndicatorType } from '@/lib/fileProcessor';
 import { Button } from '@/components/ui/button';
-import { Info, Sparkles, BarChart4, Download } from 'lucide-react';
+import { Info, Sparkles, BarChart4, Download, RefreshCcw } from 'lucide-react';
 import IndicatorTabs from '@/components/IndicatorTabs';
 import { TabsContent } from '@/components/ui/tabs';
 import { toast } from "sonner";
@@ -210,8 +210,8 @@ const Index = () => {
       downloadResult(industryResult.blobUrl);
     } else if (activeIndicator === 'environment' && environmentResult?.blobUrl) {
       downloadResult(environmentResult.blobUrl);
-    } else if (activeIndicator === 'summary' && summaryResult?.excelBlob) {
-      downloadExcel(summaryResult.excelBlob, 'Regional_Decline_Analysis.xlsx');
+    } else if (activeIndicator === 'summary' && summaryResult?.blobUrl) {
+      downloadResult(summaryResult.blobUrl, 'Regional_Decline_Analysis.csv');
     }
   };
 
@@ -252,6 +252,8 @@ const Index = () => {
       setSummaryResult(null);
       setSummaryError(null);
     }
+    
+    toast.info("Reset completed");
   };
 
   const containerAnimation = {
@@ -274,7 +276,6 @@ const Index = () => {
     }
   };
 
-  // Get current status, files, etc. based on active indicator
   const getCurrentStatus = (): Status => {
     switch(activeIndicator) {
       case 'population': return populationStatus;
@@ -375,7 +376,19 @@ const Index = () => {
                       dataCodeFilter="to_in_001"
                     />
                     
-                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end">
+                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-between">
+                      {populationFiles.length > 0 && (
+                        <Button 
+                          variant="reset" 
+                          size="sm" 
+                          onClick={handleReset}
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                          Reset
+                        </Button>
+                      )}
+                      
                       {populationStatus === 'idle' && populationFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
                           Analyze Population Data
@@ -428,7 +441,19 @@ const Index = () => {
                       dataCodeFilter="to_fa_010"
                     />
                     
-                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end">
+                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-between">
+                      {industryFiles.length > 0 && (
+                        <Button 
+                          variant="reset" 
+                          size="sm" 
+                          onClick={handleReset}
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                          Reset
+                        </Button>
+                      )}
+                      
                       {industryStatus === 'idle' && industryFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
                           Analyze Business Decline
@@ -481,7 +506,19 @@ const Index = () => {
                       dataCodeFilter="ho_yr_*"
                     />
                     
-                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end">
+                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-between">
+                      {environmentFiles.length > 0 && (
+                        <Button 
+                          variant="reset" 
+                          size="sm" 
+                          onClick={handleReset}
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                          Reset
+                        </Button>
+                      )}
+                      
                       {environmentStatus === 'idle' && environmentFiles.length > 0 && (
                         <Button onClick={handleProcessFiles}>
                           Analyze Building Age
@@ -550,7 +587,19 @@ const Index = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-end">
+                    <div className="flex flex-col-reverse sm:flex-row gap-4 justify-between">
+                      {(populationStatus === 'success' || industryStatus === 'success' || environmentStatus === 'success') && (
+                        <Button 
+                          variant="reset" 
+                          size="sm" 
+                          onClick={handleReset}
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCcw className="h-4 w-4" />
+                          Reset
+                        </Button>
+                      )}
+                    
                       {summaryStatus === 'idle' && populationStatus === 'success' && 
                        industryStatus === 'success' && environmentStatus === 'success' && (
                         <Button onClick={handleProcessFiles}>
@@ -571,14 +620,27 @@ const Index = () => {
                   />
                 </div>
                 
-                {summaryStatus === 'success' && summaryResult?.excelBlob && (
+                {summaryStatus === 'success' && summaryResult?.blobUrl && (
                   <div className="mt-4 flex justify-center">
                     <Button 
-                      onClick={() => downloadExcel(summaryResult.excelBlob, 'Regional_Decline_Analysis.xlsx')}
+                      onClick={() => downloadResult(summaryResult.blobUrl, 'Regional_Decline_Analysis.csv')}
                       className="flex items-center gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      Download Complete Excel Analysis
+                      Download Analysis CSV
+                    </Button>
+                  </div>
+                )}
+                
+                {summaryStatus === 'success' && summaryResult?.excelBlob && (
+                  <div className="mt-4 flex justify-center">
+                    <Button 
+                      variant="outline"
+                      onClick={() => downloadExcel(summaryResult.excelBlob, 'Regional_Decline_Analysis.xlsx')}
+                      className="flex items-center gap-2 mt-2"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download Excel Format
                     </Button>
                   </div>
                 )}
