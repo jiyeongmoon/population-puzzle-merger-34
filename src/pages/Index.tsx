@@ -2,15 +2,17 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import FileUploader from '@/components/FileUploader';
 import ProcessingStatus, { ProcessingStatus as Status } from '@/components/ProcessingStatus';
-import { processFiles, downloadResult, downloadExcel, ProcessingResult, IndicatorType } from '@/lib/fileProcessor';
+import { processFiles, downloadResult, downloadExcel, ProcessingResult, IndicatorType, sanitizeFileName } from '@/lib/fileProcessor';
 import { Button } from '@/components/ui/button';
 import { Info, Sparkles, BarChart4, Download, RefreshCcw } from 'lucide-react';
 import IndicatorTabs from '@/components/IndicatorTabs';
 import { TabsContent } from '@/components/ui/tabs';
 import { toast } from "sonner";
+import { Input } from '@/components/ui/input';
 
 const Index = () => {
   const [activeIndicator, setActiveIndicator] = useState<IndicatorType>('population');
+  const [locationName, setLocationName] = useState<string>('');
   
   const [populationFiles, setPopulationFiles] = useState<File[]>([]);
   const [populationStatus, setPopulationStatus] = useState<Status>('idle');
@@ -194,17 +196,29 @@ const Index = () => {
 
   const handleDownload = () => {
     if (activeIndicator === 'population' && populationResult?.blobUrl) {
-      downloadResult(populationResult.blobUrl);
+      downloadResult(populationResult.blobUrl, locationName);
     } else if (activeIndicator === 'industry' && industryResult?.blobUrl) {
-      downloadResult(industryResult.blobUrl);
+      downloadResult(industryResult.blobUrl, locationName);
     } else if (activeIndicator === 'environment' && environmentResult?.blobUrl) {
-      downloadResult(environmentResult.blobUrl);
+      downloadResult(environmentResult.blobUrl, locationName);
     } else if (activeIndicator === 'summary' && summaryResult?.blobUrl) {
-      downloadResult(summaryResult.blobUrl);
+      downloadResult(summaryResult.blobUrl, locationName);
     }
   };
 
   const handleDownloadExcel = () => {
+    let fileName = '';
+    
+    if (activeIndicator === 'population') {
+      fileName = '인문사회.xlsx';
+    } else if (activeIndicator === 'industry') {
+      fileName = '산업경제.xlsx';
+    } else if (activeIndicator === 'environment') {
+      fileName = '물리환경.xlsx';
+    } else if (activeIndicator === 'summary') {
+      fileName = '쇠퇴지표 종합.xlsx';
+    }
+    
     const result = 
       activeIndicator === 'population' ? populationResult :
       activeIndicator === 'industry' ? industryResult :
@@ -212,7 +226,7 @@ const Index = () => {
       summaryResult;
     
     if (result?.excelBlob) {
-      downloadExcel(result.excelBlob, `${activeIndicator}_analysis.xlsx`);
+      downloadExcel(result.excelBlob, fileName, locationName);
     }
   };
 
@@ -350,7 +364,7 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">인구-사회 지표</h3>
+                      <h3 className="text-xl font-medium">인문사회 지표</h3>
                       {populationStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
                           다시 시작
@@ -392,21 +406,31 @@ const Index = () => {
                     status={populationStatus}
                     progress={populationProgress}
                     errorMessage={populationError || undefined}
-                    onDownload={() => downloadResult(populationResult?.blobUrl || '')}
+                    onDownload={() => downloadResult(populationResult?.blobUrl || '', locationName)}
                     previewData={populationResult?.previewData}
                   />
                 </div>
                 
                 {populationStatus === 'success' && populationResult?.excelBlob && (
-                  <div className="mt-4 flex justify-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleDownloadExcel}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      엑셀 형식 다운로드
-                    </Button>
+                  <div className="mt-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                      <div className="w-full sm:w-64">
+                        <Input 
+                          placeholder="지역명 입력 (예: 청주시)"
+                          value={locationName}
+                          onChange={(e) => setLocationName(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        onClick={handleDownloadExcel}
+                        className="flex items-center gap-2 w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4" />
+                        엑셀 형식 다운로드
+                      </Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -415,7 +439,7 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">산업-경제 지표</h3>
+                      <h3 className="text-xl font-medium">산업경제 지표</h3>
                       {industryStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
                           다시 시작
@@ -457,21 +481,31 @@ const Index = () => {
                     status={industryStatus}
                     progress={industryProgress}
                     errorMessage={industryError || undefined}
-                    onDownload={() => downloadResult(industryResult?.blobUrl || '')}
+                    onDownload={() => downloadResult(industryResult?.blobUrl || '', locationName)}
                     previewData={industryResult?.previewData}
                   />
                 </div>
                 
                 {industryStatus === 'success' && industryResult?.excelBlob && (
-                  <div className="mt-4 flex justify-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleDownloadExcel}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      엑셀 형식 다운로드
-                    </Button>
+                  <div className="mt-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                      <div className="w-full sm:w-64">
+                        <Input 
+                          placeholder="지역명 입력 (예: 청주시)"
+                          value={locationName}
+                          onChange={(e) => setLocationName(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        onClick={handleDownloadExcel}
+                        className="flex items-center gap-2 w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4" />
+                        엑셀 형식 다운로드
+                      </Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -480,7 +514,7 @@ const Index = () => {
                 <div className="glass-panel p-8">
                   <div className="space-y-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <h3 className="text-xl font-medium">물리-환경 지표</h3>
+                      <h3 className="text-xl font-medium">물리환경 지표</h3>
                       {environmentStatus === 'success' && (
                         <Button variant="outline" onClick={handleReset} size="sm">
                           다시 시작
@@ -522,21 +556,31 @@ const Index = () => {
                     status={environmentStatus}
                     progress={environmentProgress}
                     errorMessage={environmentError || undefined}
-                    onDownload={() => downloadResult(environmentResult?.blobUrl || '')}
+                    onDownload={() => downloadResult(environmentResult?.blobUrl || '', locationName)}
                     previewData={environmentResult?.previewData}
                   />
                 </div>
                 
                 {environmentStatus === 'success' && environmentResult?.excelBlob && (
-                  <div className="mt-4 flex justify-center">
-                    <Button 
-                      variant="outline" 
-                      onClick={handleDownloadExcel}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      엑셀 형식 다운로드
-                    </Button>
+                  <div className="mt-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                      <div className="w-full sm:w-64">
+                        <Input 
+                          placeholder="지역명 입력 (예: 청주시)"
+                          value={locationName}
+                          onChange={(e) => setLocationName(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        onClick={handleDownloadExcel}
+                        className="flex items-center gap-2 w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4" />
+                        엑셀 형식 다운로드
+                      </Button>
+                    </div>
                   </div>
                 )}
               </TabsContent>
@@ -561,15 +605,15 @@ const Index = () => {
                           <div className="mt-3 space-y-2 text-sm">
                             <div className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${populationStatus === 'success' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span>인구-사회: {populationStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
+                              <span>인문사회: {populationStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${industryStatus === 'success' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span>산업-경제: {industryStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
+                              <span>산업경제: {industryStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className={`w-3 h-3 rounded-full ${environmentStatus === 'success' ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                              <span>물리-환경: {environmentStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
+                              <span>물리환경: {environmentStatus === 'success' ? '처리됨' : '처리되지 않음'}</span>
                             </div>
                           </div>
                         </div>
@@ -604,20 +648,30 @@ const Index = () => {
                     status={summaryStatus}
                     progress={summaryProgress}
                     errorMessage={summaryError || undefined}
-                    onDownload={handleDownload}
+                    onDownload={() => downloadResult(summaryResult?.blobUrl || '', locationName)}
                     previewData={summaryResult?.previewData}
                   />
                 </div>
                 
                 {summaryStatus === 'success' && summaryResult?.blobUrl && (
-                  <div className="mt-4 flex justify-center">
-                    <Button 
-                      onClick={() => downloadResult(summaryResult.blobUrl)}
-                      className="flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      CSV 다운로드
-                    </Button>
+                  <div className="mt-4 space-y-4">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                      <div className="w-full sm:w-64">
+                        <Input 
+                          placeholder="지역명 입력 (예: 청주시)"
+                          value={locationName}
+                          onChange={(e) => setLocationName(e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                      <Button 
+                        onClick={() => downloadResult(summaryResult.blobUrl, locationName)}
+                        className="flex items-center gap-2 w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4" />
+                        CSV 다운로드
+                      </Button>
+                    </div>
                   </div>
                 )}
                 
@@ -625,7 +679,7 @@ const Index = () => {
                   <div className="mt-4 flex justify-center">
                     <Button 
                       variant="outline"
-                      onClick={() => downloadExcel(summaryResult.excelBlob, '지역_쇠퇴_분석.xlsx')}
+                      onClick={() => downloadExcel(summaryResult.excelBlob, '쇠퇴지표 종합.xlsx', locationName)}
                       className="flex items-center gap-2 mt-2"
                     >
                       <Download className="h-4 w-4" />

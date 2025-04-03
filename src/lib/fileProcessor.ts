@@ -27,12 +27,17 @@ let processedData = {
   environment: null as Record<string, string>[] | null
 };
 
-export const downloadResult = (blobUrl: string) => {
+export const downloadResult = (blobUrl: string, locationName: string = '') => {
   if (!blobUrl) return;
   
   const link = document.createElement('a');
   link.href = blobUrl;
-  link.download = 'analysis_result.csv';
+  
+  const fileName = locationName 
+    ? `analysis_result_${sanitizeFileName(locationName)}.csv` 
+    : 'analysis_result.csv';
+    
+  link.download = fileName;
   document.body.appendChild(link);
   
   link.click();
@@ -40,13 +45,21 @@ export const downloadResult = (blobUrl: string) => {
   document.body.removeChild(link);
 };
 
-export const downloadExcel = (blob: Blob, fileName: string = 'analysis_result.xlsx') => {
+export const downloadExcel = (blob: Blob, fileName: string = 'analysis_result.xlsx', locationName: string = '') => {
   if (!blob) return;
   
   const blobUrl = URL.createObjectURL(blob);
   
   const link = document.createElement('a');
   link.href = blobUrl;
+  
+  if (locationName) {
+    const sanitizedLocation = sanitizeFileName(locationName);
+    const nameParts = fileName.split('.');
+    const extension = nameParts.pop();
+    fileName = `${nameParts.join('.')}_${sanitizedLocation}.${extension}`;
+  }
+  
   link.download = fileName;
   document.body.appendChild(link);
   
@@ -56,7 +69,7 @@ export const downloadExcel = (blob: Blob, fileName: string = 'analysis_result.xl
   URL.revokeObjectURL(blobUrl);
 };
 
-const parseFileContent = (content: string): DataRecord[] => {
+export const parseFileContent = (content: string): DataRecord[] => {
   const lines = content.split('\n').filter(line => line.trim().length > 0);
   
   return lines.map(line => {
@@ -982,18 +995,20 @@ const createSummaryExcelFile = async (
   return new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 };
 
-const getFileNameByIndicator = (indicatorType: IndicatorType): string => {
+const getFileNameByIndicator = (indicatorType: IndicatorType, locationName: string = ''): string => {
+  const sanitizedLocation = locationName ? `_${sanitizeFileName(locationName)}` : '';
+  
   switch (indicatorType) {
     case 'population':
-      return 'population_decline_analysis.csv';
+      return `인문사회${sanitizedLocation}.csv`;
     case 'industry':
-      return 'business_decline_analysis.csv';
+      return `산업경제${sanitizedLocation}.csv`;
     case 'environment':
-      return 'building_age_analysis.csv';
+      return `물리환경${sanitizedLocation}.csv`;
     case 'summary':
-      return 'comprehensive_analysis.csv';
+      return `쇠퇴지표 종합${sanitizedLocation}.csv`;
     default:
-      return 'analysis_result.csv';
+      return `analysis_result${sanitizedLocation}.csv`;
   }
 };
 
@@ -1010,4 +1025,8 @@ const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
     default:
       return 'Analysis completed successfully';
   }
+};
+
+const sanitizeFileName = (name: string): string => {
+  return name.replace(/[/\\?%*:|"<>]/g, '');
 };
