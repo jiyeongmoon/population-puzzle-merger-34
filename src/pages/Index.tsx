@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import FileUploader from '@/components/FileUploader';
@@ -11,31 +10,26 @@ import { TabsContent } from '@/components/ui/tabs';
 import { toast } from "sonner";
 
 const Index = () => {
-  // Current active indicator type
   const [activeIndicator, setActiveIndicator] = useState<IndicatorType>('population');
   
-  // Population section state
   const [populationFiles, setPopulationFiles] = useState<File[]>([]);
   const [populationStatus, setPopulationStatus] = useState<Status>('idle');
   const [populationProgress, setPopulationProgress] = useState(0);
   const [populationResult, setPopulationResult] = useState<ProcessingResult | null>(null);
   const [populationError, setPopulationError] = useState<string | null>(null);
   
-  // Industry section state
   const [industryFiles, setIndustryFiles] = useState<File[]>([]);
   const [industryStatus, setIndustryStatus] = useState<Status>('idle');
   const [industryProgress, setIndustryProgress] = useState(0);
   const [industryResult, setIndustryResult] = useState<ProcessingResult | null>(null);
   const [industryError, setIndustryError] = useState<string | null>(null);
   
-  // Environment section state
   const [environmentFiles, setEnvironmentFiles] = useState<File[]>([]);
   const [environmentStatus, setEnvironmentStatus] = useState<Status>('idle');
   const [environmentProgress, setEnvironmentProgress] = useState(0);
   const [environmentResult, setEnvironmentResult] = useState<ProcessingResult | null>(null);
   const [environmentError, setEnvironmentError] = useState<string | null>(null);
   
-  // Summary section state
   const [summaryStatus, setSummaryStatus] = useState<Status>('idle');
   const [summaryProgress, setSummaryProgress] = useState(0);
   const [summaryResult, setSummaryResult] = useState<ProcessingResult | null>(null);
@@ -64,7 +58,6 @@ const Index = () => {
   };
 
   const handleProcessFiles = async () => {
-    // Get the correct state based on active indicator
     let files: File[] = [];
     if (activeIndicator === 'population') {
       files = populationFiles;
@@ -87,7 +80,6 @@ const Index = () => {
     }
     
     try {
-      // Set status and progress based on active indicator
       if (activeIndicator === 'population') {
         setPopulationStatus('processing');
         setPopulationProgress(0);
@@ -102,7 +94,6 @@ const Index = () => {
         setSummaryProgress(0);
       }
       
-      // Simulate progress updates
       const progressInterval = setInterval(() => {
         if (activeIndicator === 'population') {
           setPopulationProgress(prev => {
@@ -139,11 +130,9 @@ const Index = () => {
         }
       }, 600);
       
-      // Process files for the active indicator
       const processResult = await processFiles(files, activeIndicator);
       clearInterval(progressInterval);
       
-      // Update progress based on active indicator
       if (activeIndicator === 'population') {
         setPopulationProgress(100);
       } else if (activeIndicator === 'industry') {
@@ -154,7 +143,6 @@ const Index = () => {
         setSummaryProgress(100);
       }
       
-      // Short delay before showing final status
       setTimeout(() => {
         if (processResult.success) {
           if (activeIndicator === 'population') {
@@ -332,7 +320,7 @@ const Index = () => {
         <div className="max-w-5xl mx-auto w-full flex justify-between items-center">
           <div className="flex items-center">
             <Sparkles className="h-5 w-5 text-primary mr-2" />
-            <h1 className="text-lg font-medium">지역 쇠퇴 분석기</h1>
+            <h1 className="text-lg font-medium">지역쇠퇴지표</h1>
           </div>
         </div>
       </header>
@@ -346,7 +334,7 @@ const Index = () => {
         <div className="max-w-5xl mx-auto w-full space-y-12">
           <motion.div variants={itemAnimation} className="text-center space-y-3">
             <h2 className="text-3xl font-semibold tracking-tight">
-              지역 쇠퇴 패턴 분석
+              지역쇠퇴지표
             </h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               여러 지표에서 쇠퇴 추세를 식별하고 분석하기 위해 데이터 파일을 업로드하세요.

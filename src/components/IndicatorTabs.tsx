@@ -23,19 +23,19 @@ const IndicatorTabs: React.FC<IndicatorTabsProps> = ({
       <TabsList className="grid grid-cols-4 w-full">
         <TabsTrigger value="population" className="flex items-center gap-1.5">
           <Users className="h-4 w-4" />
-          <span>Population-Social</span>
+          <span>인문사회</span>
         </TabsTrigger>
         <TabsTrigger value="industry" className="flex items-center gap-1.5">
           <Factory className="h-4 w-4" />
-          <span>Industrial-Economy</span>
+          <span>산업경제</span>
         </TabsTrigger>
         <TabsTrigger value="environment" className="flex items-center gap-1.5">
           <TreePine className="h-4 w-4" />
-          <span>Physical-Environment</span>
+          <span>물리환경</span>
         </TabsTrigger>
         <TabsTrigger value="summary" className="flex items-center gap-1.5">
           <BarChart3 className="h-4 w-4" />
-          <span>Summary</span>
+          <span>종합</span>
         </TabsTrigger>
       </TabsList>
       
