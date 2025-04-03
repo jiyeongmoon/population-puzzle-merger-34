@@ -282,7 +282,8 @@ const processEnvironmentData = async (records: DataRecord[]): Promise<Processing
         if (!isNaN(value)) {
           totalBuildings += value;
           
-          if (['ho_yr_001', 'ho_yr_002', 'ho_yr_003', 'ho_yr_004'].includes(record.data_code)) {
+          const oldBuildingCodes = ['ho_yr_001', 'ho_yr_002', 'ho_yr_003', 'ho_yr_004'];
+          if (oldBuildingCodes.includes(record.data_code)) {
             oldBuildings += value;
           }
         }
