@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { CheckCircle2, Loader2, Download, Eye, EyeOff, ArrowUp, ArrowDown, Star } from 'lucide-react';
@@ -116,7 +115,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                       {previewData.headers.includes('Decline ≥20%') ? (
                         <>
                           <div className="flex items-center gap-1">
-                            <span className="text-green-600 font-medium">▲</span>
+                            <Star className="inline h-3.5 w-3.5 text-amber-500" />
                             <span>인구 최대 연도</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -127,7 +126,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                       ) : (
                         <>
                           <div className="flex items-center gap-1">
-                            <span className="text-amber-500 font-medium">★</span>
+                            <Star className="inline h-3.5 w-3.5 text-amber-500" />
                             <span>최대값 연도 (최근 10년)</span>
                           </div>
                           <div className="flex items-center gap-1">
@@ -215,7 +214,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                                 categoryClass = "bg-rose-50";
                               }
                               // Industrial-Economy category (light orange/yellow)
-                              else if (header.startsWith('Ind.')) {
+                              if (header.startsWith('Ind.')) {
                                 categoryClass = "bg-amber-50";
                               }
                               // Physical-Environment category (light green)
