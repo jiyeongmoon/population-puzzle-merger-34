@@ -558,8 +558,8 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
       'Ind. Decline ≥5%',
       'Ind. Consec. Decline',
       'Ind. Category Met',
-      'Env. Old Building %',
-      'Env. Old Building ≥50%',
+      '건물노후도',
+      '노후도≥50%',
       'Env. Category Met',
       'Total Categories'
     ];
@@ -576,8 +576,8 @@ const processAllIndicators = async (): Promise<ProcessingResult> => {
         'Ind. Decline ≥5%': row.industry_decline_rate,
         'Ind. Consec. Decline': row.industry_consecutive_decline,
         'Ind. Category Met': row.industry_category_met,
-        'Env. Old Building %': row.environment_old_building_pct,
-        'Env. Old Building ≥50%': row.environment_old_building,
+        '건물노후도': row.environment_old_building_pct,
+        '노후도≥50%': row.environment_old_building,
         'Env. Category Met': row.environment_category_met,
         'Total Categories': row.total_categories_met.toString()
       }))
