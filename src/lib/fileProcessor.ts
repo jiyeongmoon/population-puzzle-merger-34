@@ -1027,6 +1027,6 @@ const getSuccessMessageByIndicator = (indicatorType: IndicatorType): string => {
   }
 };
 
-const sanitizeFileName = (name: string): string => {
+export const sanitizeFileName = (name: string): string => {
   return name.replace(/[/\\?%*:|"<>]/g, '');
 };
