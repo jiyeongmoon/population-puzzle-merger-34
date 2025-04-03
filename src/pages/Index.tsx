@@ -353,6 +353,17 @@ const Index = () => {
             <p className="text-muted-foreground max-w-xl mx-auto">
               여러 지표에서 쇠퇴 추세를 식별하고 분석하기 위해 데이터 파일을 업로드하세요.
             </p>
+            
+            <div className="flex justify-center mt-6">
+              <div className="w-full max-w-xs">
+                <Input 
+                  placeholder="지역명 입력 (예: 청주시)"
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+            </div>
           </motion.div>
           
           <motion.div variants={itemAnimation}>
@@ -413,15 +424,7 @@ const Index = () => {
                 
                 {populationStatus === 'success' && populationResult?.excelBlob && (
                   <div className="mt-4 space-y-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-                      <div className="w-full sm:w-64">
-                        <Input 
-                          placeholder="지역명 입력 (예: 청주시)"
-                          value={locationName}
-                          onChange={(e) => setLocationName(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
+                    <div className="flex justify-center">
                       <Button 
                         variant="outline" 
                         onClick={handleDownloadExcel}
@@ -488,15 +491,7 @@ const Index = () => {
                 
                 {industryStatus === 'success' && industryResult?.excelBlob && (
                   <div className="mt-4 space-y-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-                      <div className="w-full sm:w-64">
-                        <Input 
-                          placeholder="지역명 입력 (예: 청주시)"
-                          value={locationName}
-                          onChange={(e) => setLocationName(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
+                    <div className="flex justify-center">
                       <Button 
                         variant="outline" 
                         onClick={handleDownloadExcel}
@@ -563,15 +558,7 @@ const Index = () => {
                 
                 {environmentStatus === 'success' && environmentResult?.excelBlob && (
                   <div className="mt-4 space-y-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-                      <div className="w-full sm:w-64">
-                        <Input 
-                          placeholder="지역명 입력 (예: 청주시)"
-                          value={locationName}
-                          onChange={(e) => setLocationName(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
+                    <div className="flex justify-center">
                       <Button 
                         variant="outline" 
                         onClick={handleDownloadExcel}
@@ -655,15 +642,7 @@ const Index = () => {
                 
                 {summaryStatus === 'success' && summaryResult?.blobUrl && (
                   <div className="mt-4 space-y-4">
-                    <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
-                      <div className="w-full sm:w-64">
-                        <Input 
-                          placeholder="지역명 입력 (예: 청주시)"
-                          value={locationName}
-                          onChange={(e) => setLocationName(e.target.value)}
-                          className="w-full"
-                        />
-                      </div>
+                    <div className="flex justify-center">
                       <Button 
                         onClick={() => downloadResult(summaryResult.blobUrl, locationName)}
                         className="flex items-center gap-2 w-full sm:w-auto"
