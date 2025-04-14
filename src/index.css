@@ -107,6 +107,27 @@
     font-style: normal;
     src: url('https://rsms.me/inter/font-files/Inter.var.woff2?v=3.19') format('woff2');
   }
+  
+  /* Ensure Leaflet styles are properly incorporated */
+  .leaflet-container {
+    height: 100%;
+    width: 100%;
+    border-radius: 0.5rem;
+  }
+  
+  .leaflet-control-zoom-in,
+  .leaflet-control-zoom-out {
+    @apply bg-white text-foreground border-border hover:bg-secondary;
+  }
+  
+  .leaflet-popup-content-wrapper {
+    @apply rounded-md shadow-lg text-foreground;
+    background: rgba(255, 255, 255, 0.95);
+  }
+  
+  .leaflet-popup-tip {
+    background: rgba(255, 255, 255, 0.95);
+  }
 }
 
 @layer components {

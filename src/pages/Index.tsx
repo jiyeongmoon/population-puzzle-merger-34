@@ -1,14 +1,16 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import FileUploader from '@/components/FileUploader';
 import ProcessingStatus, { ProcessingStatus as Status } from '@/components/ProcessingStatus';
 import { processFiles, downloadResult, downloadExcel, ProcessingResult, IndicatorType, sanitizeFileName } from '@/lib/fileProcessor';
 import { Button } from '@/components/ui/button';
-import { Info, Sparkles, BarChart4, Download, RefreshCcw } from 'lucide-react';
+import { Info, Sparkles, BarChart4, Download, RefreshCcw, MapPin } from 'lucide-react';
 import IndicatorTabs from '@/components/IndicatorTabs';
 import { TabsContent } from '@/components/ui/tabs';
 import { toast } from "sonner";
 import { Input } from '@/components/ui/input';
+import MapViewer from '@/components/MapViewer';
 
 const Index = () => {
   const [activeIndicator, setActiveIndicator] = useState<IndicatorType>('population');
@@ -640,6 +642,24 @@ const Index = () => {
                   />
                 </div>
                 
+                {/* Map Section */}
+                <div className="mt-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <h3 className="text-lg font-medium">지역 지도 시각화</h3>
+                    </div>
+                  </div>
+                  
+                  <MapViewer 
+                    summaryData={summaryResult?.previewData?.rows}
+                  />
+                  
+                  <div className="p-3 bg-muted/30 rounded text-sm text-muted-foreground">
+                    <p>위 지도는 GeoJSON 데이터를 기반으로 행정구역을 시각화합니다. 지역을 클릭하면 해당 지역의 상세 정보를 확인할 수 있습니다.</p>
+                  </div>
+                </div>
+                
                 {summaryStatus === 'success' && summaryResult?.excelBlob && (
                   <div className="mt-4 flex justify-center">
                     <Button 
@@ -675,12 +695,15 @@ const Index = () => {
                   <li>
                     <span className="font-medium">[산업경제]</span> 총 사업체 수의 감소 등 산업의 이탈이 발생되는 지역: 다음 각 목의 어느 하나 이상에 해당하는 지역
                     <ul className="pl-5 space-y-1 mt-1">
-                      <li>가. 최근 10년간 「통계법」제18조에 따라 통계청이 승인한 전국사업체총조사 결과에 따른 총 사업체 수가 가장 많았던 시기와 비교하여 5퍼센트 이상 총 사업체 수가 감소한 지역</li>
+                      <li>가. 최근 10년간 총 사업체 수가 가장 많았던 시기와 비교하여 5퍼센트 이상 총 사업체 수가 감소한 지역</li>
                       <li>나. 최근 5년간 3년 이상 연속으로 총 사업체 수가 감소한 지역</li>
                     </ul>
                   </li>
                   <li>
-                    <span className="font-medium">[물리환경]</span> 노후주택의 증가 등 주거환경이 악화되는 지역: 전체 건축물 중 준공된 후 20년 이상 지난 건축물이 차지하는 비율이 50퍼센트 이상인 지역
+                    <span className="font-medium">[물리환경]</span> 건축물의 노후화가 진행되는 지역: 다음에 해당하는 지역
+                    <ul className="pl-5 space-y-1 mt-1">
+                      <li>전체 건축물 중에서 준공된 후 20년 이상 지난 건축물이 차지하는 비율이 50퍼센트 이상인 지역</li>
+                    </ul>
                   </li>
                 </ul>
               </div>
@@ -688,14 +711,6 @@ const Index = () => {
           </motion.div>
         </div>
       </motion.main>
-      
-      <footer className="py-6 px-6 sm:px-8 border-t">
-        <div className="max-w-5xl mx-auto w-full">
-          <p className="text-sm text-muted-foreground text-center">
-            지역 쇠퇴 분석기 — 인구통계 및 경제 연구용
-          </p>
-        </div>
-      </footer>
     </div>
   );
 };
